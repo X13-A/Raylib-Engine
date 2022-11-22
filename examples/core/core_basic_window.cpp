@@ -16,8 +16,6 @@ using namespace std;
 
 #define EPSILON 1.e-6f
 
-//static Vector2 GetMouseWheelMoove = { 0 };
-
 template <typename T> int sgn(T val) {
 	return (T(0) < val) - (val < T(0));
 }
@@ -69,8 +67,13 @@ struct Plane
 };
 
 struct Disk {
-	float radius;
 	ReferenceFrame ref;
+	float radius;
+};
+
+struct Sphere {
+	ReferenceFrame ref;
+	float radius;
 };
 
 struct Box {
@@ -78,6 +81,24 @@ struct Box {
 	float height;
 	float depth;
 	Vector3 centerPos;
+};
+
+struct Cylinder {
+	ReferenceFrame ref;
+	float halfHeight;
+	float radius;
+};
+
+struct Capsule {
+	ReferenceFrame ref;
+	float halfHeight;
+	float radius;
+};
+
+struct RoundedBox {
+	ReferenceFrame ref;
+	Vector3 extents;
+	float radius;
 };
 
 struct Polar
@@ -170,7 +191,7 @@ Vector3 SphericalToCartesian(Spherical spherical)
 void MyUpdateOrbitalCamera(Camera* camera, float deltaTime)
 {
 	static Spherical sphPos = { 10,PI / 4.f,PI / 4.f };
-	Spherical sphSpeed = { 2.0f,0.04f,0.04f };
+	Spherical sphSpeed = { 2 ,0.04f,0.04f };
 	float rhoMin = 4;
 	float rhoMax = 40;
 	Vector2 mousePos;
@@ -185,16 +206,12 @@ void MyUpdateOrbitalCamera(Camera* camera, float deltaTime)
 
 	/*Calcul du vecteur de déplacement de la caméra en coordonnées sphériques*/
 	Spherical cam = CartesianToSpherical(camera->position);
-	if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
-	{
-		cam.rho += GetMouseWheelMove();
-	}
-
+	cam.rho -= GetMouseWheelMove();
 	/*Calcul de la nouvelle position de la caméra en coordonnées sphériques*/
 	if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
 	{
-		cam.theta += mouseVect.x / 100;
-		cam.phi += mouseVect.y / 100;
+		cam.theta -= mouseVect.x / 100;
+		cam.phi -= mouseVect.y / 100;
 	}
 	camera->position = SphericalToCartesian(cam);
 }
@@ -318,12 +335,42 @@ void MyDrawPolygonDisk(Disk disk, int nSectors, Color color = LIGHTGRAY)
 
 void MyDrawWireframeDisk(Disk disk, int nSectors, Color color = DARKGRAY)
 {
+	int numVertex = 4;
+	if (rlCheckBufferLimit(numVertex)) rlglDraw();
 
+	rlPushMatrix();
+	rlTranslatef(disk.ref.origin.x, disk.ref.origin.y, disk.ref.origin.z);
+
+	Vector3 vect;
+	float angle;
+	QuaternionToAxisAngle(disk.ref.q, &vect, &angle);
+	rlRotatef(angle * RAD2DEG, vect.x, vect.y, vect.z);
+
+	rlScalef(disk.radius, 1, disk.radius);
+
+	rlBegin(RL_LINES);
+	rlColor4ub(color.r, color.g, color.b, color.a);
+
+	for (int i = 0; i < nSectors; i++)
+	{
+		Vector3 leftPoint = CylindricalToCartesian({ 1, (i * (2 * PI)) / nSectors, 0 });
+		Vector3 rightPoint = CylindricalToCartesian({ 1, ((i + 1) * (2 * PI)) / nSectors, 0 });
+
+		rlVertex3f(0, 0, 0);
+		rlVertex3f(leftPoint.x, leftPoint.y, leftPoint.z);
+
+		rlVertex3f(leftPoint.x, leftPoint.y, leftPoint.z);
+		rlVertex3f(rightPoint.x, rightPoint.y, rightPoint.z);
+	}
+
+	rlEnd();
+	rlPopMatrix();
 }
 
 void MyDrawDisk(Disk disk, int nSectors, bool drawPolygon = true, bool drawWireframe = true, Color polygonColor = LIGHTGRAY, Color wireframeColor = DARKGRAY)
 {
-
+	if (drawPolygon) MyDrawPolygonDisk(disk,nSectors, polygonColor);
+	if (drawWireframe)MyDrawWireframeDisk(disk, nSectors, wireframeColor);
 }
 
 #pragma endregion
@@ -331,94 +378,228 @@ void MyDrawDisk(Disk disk, int nSectors, bool drawPolygon = true, bool drawWiref
 #pragma region Box
 
 void MyDrawPolygonBox(Box box, Color color = LIGHTGRAY) {
-	// Valeur des points avant ajout des dimensions
+	//Valeur des points avant ajout des dimensions
 	float ox = box.centerPos.x - box.width / 2;
 	float oy = box.centerPos.y - box.height / 2;
 	float oz = box.centerPos.z - box.depth / 2;
 
-	// Valeur des points après ajout des dimensions
+	//Valeur des points après ajout des dimensions
 	float x = ox + box.width;
 	float y = oy + box.height;
 	float z = oz + box.depth;
 
-	// Front face
+	rlBegin(RL_LINES);
+	rlColor4ub(color.r, color.g, color.b, color.a);
+
+		//Front face
+		rlVertex3f( ox, oy, oz );
+		rlVertex3f( x, oy, oz );
+		rlVertex3f( ox, y, oz );
+		rlVertex3f( x, y, oz );
+
+	rlEnd();
+	rlPopMatrix();
+
+	rlBegin(RL_LINES);
+	rlColor4ub(color.r, color.g, color.b, color.a);
+
+		//Top face
+		rlVertex3f(ox, oy, oz);
+		rlVertex3f(x, oy, oz);
+		rlVertex3f(ox, y, oz);
+		rlVertex3f(x, y, oz);
+
+	rlEnd();
+	rlPopMatrix();
+
+		//Front face
+		//DrawLine3D({ ox, oy, oz }, { x, oy, oz }, color);
+		//DrawLine3D({ ox, oy, oz }, { ox, y, oz }, color);
+		//DrawLine3D({ x, y, oz }, { ox, y, oz }, color);
+		//DrawLine3D({ x, y, oz }, { x, oy, oz }, color);
+
+		//Top face
+		//DrawLine3D({ ox, y, oz }, { ox, y, z }, color);
+		//DrawLine3D({ x, y, oz }, { x, y, z }, color);
+		//DrawLine3D({ ox, y, z }, { x, y, z }, color);
+
+		//Bottom face
+		DrawLine3D({ ox, oy, oz }, { ox, oy, z }, color);
+		DrawLine3D({ x, oy, oz }, { x, oy, z }, color);
+		DrawLine3D({ ox, oy, z }, { x, oy, z }, color);
+
+		//Back face
+		DrawLine3D({ ox, oy, z }, { ox, y, z }, color);
+		DrawLine3D({ x, oy, z }, { x, y, z }, color);
+
+}
+
+void MyDrawWireframeBox(Box box, Color color = DARKGRAY) {
+	//Valeur des points avant ajout des dimensions
+	float ox = box.centerPos.x - box.width / 2;
+	float oy = box.centerPos.y - box.height / 2;
+	float oz = box.centerPos.z - box.depth / 2;
+
+	//Valeur des points après ajout des dimensions
+	float x = ox + box.width;
+	float y = oy + box.height;
+	float z = oz + box.depth;
+
+	//Front face
 	DrawLine3D({ ox, oy, oz }, { x, oy, oz }, color);
 	DrawLine3D({ ox, oy, oz }, { ox, y, oz }, color);
 	DrawLine3D({ x, y, oz }, { ox, y, oz }, color);
 	DrawLine3D({ x, y, oz }, { x, oy, oz }, color);
 
-	// Top face
+	//Top face
 	DrawLine3D({ ox, y, oz }, { ox, y, z }, color);
 	DrawLine3D({ x, y, oz }, { x, y, z }, color);
 	DrawLine3D({ ox, y, z }, { x, y, z }, color);
 
-	// Bottom face
+	//Bottom face
 	DrawLine3D({ ox, oy, oz }, { ox, oy, z }, color);
 	DrawLine3D({ x, oy, oz }, { x, oy, z }, color);
 	DrawLine3D({ ox, oy, z }, { x, oy, z }, color);
 
-	// Back face
+	//Back face
 	DrawLine3D({ ox, oy, z }, { ox, y, z }, color);
 	DrawLine3D({ x, oy, z }, { x, y, z }, color);
 }
 
-void MyDrawWireframeBox(Box box, Color color = DARKGRAY) {
-	// Valeur des points avant ajout des dimensions
-	float ox = box.centerPos.x - box.width / 2;
-	float oy = box.centerPos.y - box.height / 2;
-	float oz = box.centerPos.z - box.depth / 2;
-
-	// Valeur des points après ajout des dimensions
-	float x = ox + box.width;
-	float y = oy + box.height;
-	float z = oz + box.depth;
-
-	MyDrawPolygonBox(box, color);
-	DrawLine3D({ ox,y,oz }, { x,oy,oz }, color);
-	DrawLine3D({ x,oy,z }, { ox,y,z }, color);
-	DrawLine3D({ x,y,z }, { ox,y,oz }, color);
-	DrawLine3D({ ox,oy,oz }, { x,oy,z }, color);
-	DrawLine3D({ x,y,z }, { x,oy,oz }, color);
-	DrawLine3D({ ox,oy,oz }, { ox,y,z }, color);
+void MyDrawBox(Box box, bool drawPolygon = true, bool drawWireframe = true, Color polygonColor = LIGHTGRAY, Color wireframeColor = DARKGRAY) {
+	if (drawWireframe) MyDrawWireframeBox(box, wireframeColor);
+	if (drawPolygon) MyDrawPolygonBox(box, polygonColor);
 }
 
-void MyDrawBox(Box box, bool drawPolygon = true, bool drawWireframe = true, Color polygonColor = LIGHTGRAY, Color wireframeColor = DARKGRAY) {
-	// Valeur des points avant ajout des dimensions
-	float ox = box.centerPos.x - box.width / 2;
-	float oy = box.centerPos.y - box.height / 2;
-	float oz = box.centerPos.z - box.depth / 2;
+#pragma endregion
 
-	// Valeur des points après ajout des dimensions
-	float x = ox + box.width;
-	float y = oy + box.height;
-	float z = oz + box.depth;
+#pragma region Sphere
 
-	// Front face (sens horaire)
-	DrawTriangle3D({ ox,oy,oz }, { ox,y,oz }, { x,oy,oz }, polygonColor);
-	DrawTriangle3D({ x,y,oz }, { x,oy,oz }, { ox,y,oz }, polygonColor);
+void MyDrawPolygonSphere(Sphere sphere, int nMeridians, int nParallels, Color color = LIGHTGRAY)
+{
+	int numVertex = (nParallels + 2) * nMeridians * 6;
+	if (rlCheckBufferLimit(numVertex)) rlglDraw();
 
-	// Opposite front face (sens trigo)
-	DrawTriangle3D({ ox,oy,z }, { x,oy,z }, { ox,y,z }, polygonColor);
-	DrawTriangle3D({ x,y,z }, { ox,y,z }, { x,oy,z }, polygonColor);
+	rlPushMatrix();
 
-	// Top face (sens horaire)
-	DrawTriangle3D({ ox,y,z }, { x,y,z }, { ox,y,oz }, polygonColor);
-	DrawTriangle3D({ x,y,oz }, { ox,y,oz }, { x,y,z }, polygonColor);
+	rlTranslatef(sphere.radius, sphere.radius, sphere.radius);
+	rlScalef(sphere.radius, sphere.radius, sphere.radius);
 
-	// Bottom face (sens trigo)
-	DrawTriangle3D({ ox,oy,z }, { ox,oy,oz }, { x,oy,z }, polygonColor);
-	DrawTriangle3D({ x,oy,oz }, { x,oy,z }, { ox,oy,oz }, polygonColor);
+	rlBegin(RL_TRIANGLES);
+	rlColor4ub(color.r, color.g, color.b, color.a);
 
-	// Right face (sens horaire)
-	DrawTriangle3D({ x,y,oz }, { x,y,z }, { x,oy,oz }, polygonColor);
-	DrawTriangle3D({ x,oy,z }, { x,oy,oz }, { x,y,z }, polygonColor);
+	for (int i = 0; i < (nParallels + 2); i++)
+	{
+		for (int j = 0; j < nMeridians; j++)
+		{
+			rlVertex3f(cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * i)) * sinf(DEG2RAD * (j * 360 / nMeridians)),
+				sinf(DEG2RAD * (280 + (180 / (nParallels + 1)) * i)),
+				cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * i)) * cosf(DEG2RAD * (j * 360 / nMeridians)));
+			rlVertex3f(cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i + 1))) * sinf(DEG2RAD * ((j + 1) * 360 / nMeridians)),
+				sinf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i + 1))),
+				cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i + 1))) * cosf(DEG2RAD * ((j + 1) * 360 / nMeridians)));
+			rlVertex3f(cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i + 1))) * sinf(DEG2RAD * (j * 360 / nMeridians)),
+				sinf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i + 1))),
+				cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i + 1))) * cosf(DEG2RAD * (j * 360 / nMeridians)));
 
-	// Left face (sens trigo)
-	DrawTriangle3D({ ox,y,oz }, { ox,oy,oz }, { ox,y,z }, polygonColor);
-	DrawTriangle3D({ ox,oy,z }, { ox,y,z }, { ox,oy,oz }, polygonColor);
+			rlVertex3f(cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * i)) * sinf(DEG2RAD * (j * 360 / nMeridians)),
+				sinf(DEG2RAD * (280 + (180 / (nParallels + 1)) * i)),
+				cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * i)) * cosf(DEG2RAD * (j * 360 / nMeridians)));
+			rlVertex3f(cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i))) * sinf(DEG2RAD * ((j + 1) * 360 / nMeridians)),
+				sinf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i))),
+				cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i))) * cosf(DEG2RAD * ((j + 1) * 360 / nMeridians)));
+			rlVertex3f(cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i + 1))) * sinf(DEG2RAD * ((j + 1) * 360 / nMeridians)),
+				sinf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i + 1))),
+				cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i + 1))) * cosf(DEG2RAD * ((j + 1) * 360 / nMeridians)));
+		}
+	}
+	rlEnd();
+	rlPopMatrix();
+}
 
-	if (drawWireframe) MyDrawWireframeBox(box, wireframeColor);
-	if (drawPolygon) MyDrawPolygonBox(box, wireframeColor);
+void MyDrawWireframeSphere(Sphere sphere, int nMeridians, int nParallels, Color color = DARKGRAY)
+{
+	int numVertex = (nParallels + 2) * nMeridians * 6;
+	if (rlCheckBufferLimit(numVertex)) rlglDraw();
+
+	rlPushMatrix();
+
+	rlTranslatef(sphere.radius, sphere.radius, sphere.radius);
+	rlScalef(sphere.radius, sphere.radius, sphere.radius);
+
+	rlBegin(RL_LINES);
+	rlColor4ub(color.r, color.g, color.b, color.a);
+
+	for (int i = 0; i < (nParallels + 2); i++)
+	{
+		for (int j = 0; j < nMeridians; j++)
+		{
+			rlVertex3f(cosf(DEG2RAD * (270 + (180 / (nParallels + 1)) * (i + 1))) * sinf(DEG2RAD * ((j + 1) * 360 / nMeridians)),
+				sinf(DEG2RAD * (270 + (180 / (nParallels + 1)) * (i + 1))),
+				cosf(DEG2RAD * (270 + (180 / (nParallels + 1)) * (i + 1))) * cosf(DEG2RAD * ((j + 1) * 360 / nMeridians)));
+			rlVertex3f(cosf(DEG2RAD * (270 + (180 / (nParallels + 1)) * (i + 1))) * sinf(DEG2RAD * (j * 360 / nMeridians)),
+				sinf(DEG2RAD * (270 + (180 / (nParallels + 1)) * (i + 1))),
+				cosf(DEG2RAD * (270 + (180 / (nParallels + 1)) * (i + 1))) * cosf(DEG2RAD * (j * 360 / nMeridians)));
+			
+			rlVertex3f(cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * i)) * sinf(DEG2RAD * (j * 360 / nMeridians)),
+				sinf(DEG2RAD * (280 + (180 / (nParallels + 1)) * i)),
+				cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * i)) * cosf(DEG2RAD * (j * 360 / nMeridians)));
+			rlVertex3f(cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i + 1))) * sinf(DEG2RAD * (j * 360 / nMeridians)),
+				sinf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i + 1))),
+				cosf(DEG2RAD * (280 + (180 / (nParallels + 1)) * (i + 1))) * cosf(DEG2RAD * (j * 360 / nMeridians)));	
+		}
+	}
+	rlEnd();
+	rlPopMatrix();
+}
+
+void MyDrawSphere(Sphere sphere, int nMeridians, int nParallels, bool drawPolygon = true, bool drawWireframe = true, Color polygonColor = LIGHTGRAY, Color wireframeColor = DARKGRAY)
+{
+	if (drawPolygon) MyDrawPolygonSphere(sphere, nMeridians, nParallels, polygonColor);
+	if (drawWireframe)MyDrawWireframeSphere(sphere, nMeridians, nParallels, wireframeColor);
+}
+
+#pragma endregion
+
+#pragma region Cylinder
+
+void MyDrawPolygonCylinder(Cylinder cylinder, int nSectors, bool drawCaps = false, Color color = LIGHTGRAY)
+{
+	if (rlCheckBufferLimit(4 * nSectors)) rlglDraw();
+	rlPushMatrix();
+	rlTranslatef(cylinder.ref.origin.x, cylinder.ref.origin.y, cylinder.ref.origin.z);
+
+	Vector3 vect;
+	float angle;
+	QuaternionToAxisAngle(cylinder.ref.q, &vect, &angle);
+	rlRotatef(angle * RAD2DEG, vect.x, vect.y, vect.z);
+
+	rlScalef(cylinder.radius, 1, cylinder.radius);
+
+	rlBegin(RL_TRIANGLES);
+	rlColor4ub(color.r, color.g, color.b, color.a);
+
+	for (int i = 0; i < nSectors; i++)
+	{
+		Vector3 leftPoint = CylindricalToCartesian({ 1, (i * (2 * PI)) / nSectors, 0 });
+		Vector3 rightPoint = CylindricalToCartesian({ 1, ((i + 1) * (2 * PI)) / nSectors, 0 });
+
+		rlVertex3f(0, 0, 0);
+		rlVertex3f(leftPoint.x, leftPoint.y, leftPoint.z);
+		rlVertex3f(rightPoint.x, rightPoint.y, rightPoint.z);
+	}
+
+	rlEnd();
+	rlPopMatrix();
+}
+void MyDrawWireframeCylinder(Cylinder cylinder, int nSectors, bool drawCaps = false, Color color = LIGHTGRAY)
+{
+
+}
+void MyDrawCylinder(Cylinder cylinder, int nSectors, bool drawCaps = false, bool drawPolygon = true, bool drawWireframe = true, Color polygonColor = LIGHTGRAY, Color wireframeColor = DARKGRAY)
+{
+	if (drawPolygon) MyDrawPolygonCylinder(cylinder, nSectors, drawCaps, polygonColor);
+	if (drawWireframe)MyDrawWireframeCylinder(cylinder, nSectors, drawCaps, wireframeColor);
 }
 
 #pragma endregion
@@ -427,7 +608,7 @@ int main(int argc, char* argv[])
 {
 	// ICI LES TEST 
 
-	// Initialization 
+	// Initialization
 	//--------------------------------------------------------------------------------------
 	float screenSizeCoef = .9f;
 	const int screenWidth = 1920 * screenSizeCoef;
@@ -438,12 +619,12 @@ int main(int argc, char* argv[])
 	SetTargetFPS(60);
 
 	// CAMERA 
-	Vector3 cameraPos = { 8.0f, 15.0f, 14.0f };
+	Vector3 cameraPos = { 8, 15, 14 };
 	Camera camera = { 0 };
 	camera.position = cameraPos;
-	camera.target = { 0.0f, 0.0f, 0.0f };
-	camera.up = { 0.0f, 1.0f, 0.0f };
-	camera.fovy = 120.0f;
+	camera.target = { 0, 0, 0 };
+	camera.up = { 0, 1, 0 };
+	camera.fovy = 120;
 	camera.type = CAMERA_PERSPECTIVE;
 	SetCameraMode(camera, CAMERA_CUSTOM);  // Set an orbital camera mode
 
@@ -471,7 +652,7 @@ int main(int argc, char* argv[])
 		BeginMode3D(camera);
 		{
 			//3D REFERENTIAL
-			DrawGrid(20, 1.0f);        // Draw a grid
+			DrawGrid(20, 1);        // Draw a grid
 			DrawLine3D({ 0 }, { 0,10,0 }, DARKGRAY);
 			DrawSphere({ 10,0,0 }, .2f, RED);
 			DrawSphere({ 0,10,0 }, .2f, GREEN);
@@ -479,25 +660,37 @@ int main(int argc, char* argv[])
 
 
 			// DISK DISPLAY TEST
-			ReferenceFrame ref = ReferenceFrame(
+			/*ReferenceFrame ref = ReferenceFrame(
 				{ 0,2,0 },
 				QuaternionFromAxisAngle(Vector3Normalize({ 1,1,1 }), 0));
-			MyDrawPolygonDisk({ 5, ref }, 5);
+			Disk disk = { 4, ref };
+			MyDrawDisk(disk, 30, false, true);*/
 
 			// BOX DISPLAY TEST
 			/*Box box = { 5,5,5, {0,0,0} };
 			MyDrawBox(box, true, true, BLUE, BLACK);*/
 
-
-			/*Disk disk = { ref, 1 };
-			MyDrawPolygonDisk(disk, 10, YELLOW);*/
-
 			// QUAD DISPLAY TEST
-	/*		ReferenceFrame ref = ReferenceFrame(
+			/*ReferenceFrame ref = ReferenceFrame(
+				{ 2-,5,0 },
+				QuaternionFromAxisAngle(Vector3Normalize({ 1,1,1 }), 90));
+			Quad quad = { ref,{3,1,1} };
+			MyDrawQuad(quad, true, false);*/
+
+			// SPHERE DISPLAY TEST
+			ReferenceFrame ref = ReferenceFrame(
 				{ 0,2,0 },
-				QuaternionFromAxisAngle(Vector3Normalize({ 1,1,1 }), PI / 4));
-			Quad quad = { ref,{3,3,5} };
-			MyDrawQuad(quad);*/
+				QuaternionFromAxisAngle(Vector3Normalize({ 1,1,1 }), 0));
+			Sphere sphere = { ref, 5 };
+			MyDrawSphere(sphere, 30, 20, true, true);
+
+			// CYLINDER DISPLAY TEST
+			/*ReferenceFrame ref = ReferenceFrame(
+				{ 0,2,0 },
+				QuaternionFromAxisAngle(Vector3Normalize({ 1,1,1 }), 0));
+			Cylinder cylinder = { ref, 5, 3 };
+			MyDrawPolygonCylinder(cylinder, 30);*/
+
 		}
 		EndMode3D();
 

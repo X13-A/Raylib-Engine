@@ -825,26 +825,29 @@ void MyDrawPolygonCylinder(Cylinder cylinder, int nSectors, bool drawCaps = fals
 
 	rlPushMatrix();
 	rlTranslatef(cylinder.ref.origin.x, cylinder.ref.origin.y, cylinder.ref.origin.z);
-	rlScalef(cylinder.radius, cylinder.halfHeight, cylinder.radius);
 
 	Vector3 vect;
 	float angle;
 	QuaternionToAxisAngle(cylinder.ref.q, &vect, &angle);
 	rlRotatef(angle * RAD2DEG, vect.x, vect.y, vect.z);
+	rlScalef(cylinder.radius, cylinder.halfHeight, cylinder.radius);
 
 	rlBegin(RL_TRIANGLES);
 	rlColor4ub(color.r, color.g, color.b, color.a);
 
+	Cylindrical cylPoint;
+	cylPoint.rho = 1;
+	Vector3 point1;
+	Vector3 point2;
+
 	for (int i = 0; i < nSectors; i++)
 	{
-		Cylindrical cylPoint;
-		cylPoint.rho = cylinder.radius;
 		cylPoint.theta = sectorAngle * i;
 		cylPoint.y = -1;
 
-		Vector3 point1 = CylindricalToCartesian(cylPoint);
+		point1 = CylindricalToCartesian(cylPoint);
 		cylPoint.theta = sectorAngle * (i + 1);
-		Vector3 point2 = CylindricalToCartesian(cylPoint);
+		point2 = CylindricalToCartesian(cylPoint);
 
 		// Premier triangle
 		rlVertex3f(point2.x, 1, point2.z);
@@ -882,26 +885,29 @@ void MyDrawWireframeCylinder(Cylinder cylinder, int nSectors, bool drawCaps = fa
 
 	rlPushMatrix();
 	rlTranslatef(cylinder.ref.origin.x, cylinder.ref.origin.y, cylinder.ref.origin.z);
-	rlScalef(cylinder.radius, cylinder.halfHeight, cylinder.radius);
 
 	Vector3 vect;
 	float angle;
 	QuaternionToAxisAngle(cylinder.ref.q, &vect, &angle);
 	rlRotatef(angle * RAD2DEG, vect.x, vect.y, vect.z);
+	rlScalef(cylinder.radius, cylinder.halfHeight, cylinder.radius);
 
 	rlBegin(RL_LINES);
 	rlColor4ub(color.r, color.g, color.b, color.a);
 
+	Cylindrical cylPoint;
+	cylPoint.rho = 1;
+	Vector3 point1;
+	Vector3 point2;
+
 	for (int i = 0; i < nSectors; i++)
 	{
-		Cylindrical cylPoint;
-		cylPoint.rho = cylinder.radius;
 		cylPoint.theta = sectorAngle * i;
 		cylPoint.y = -1;
 
-		Vector3 point1 = CylindricalToCartesian(cylPoint);
+		point1 = CylindricalToCartesian(cylPoint);
 		cylPoint.theta = sectorAngle * (i + 1);
-		Vector3 point2 = CylindricalToCartesian(cylPoint);
+		point2 = CylindricalToCartesian(cylPoint);
 
 		rlVertex3f(point1.x, -1, point1.z);
 		rlVertex3f(point2.x, -1, point2.z);
@@ -958,26 +964,30 @@ void MyDrawPolygonCylinderQuarter(CylinderQuarter cylinderQuarter, int nSectors,
 
 	rlPushMatrix();
 	rlTranslatef(cylinderQuarter.ref.origin.x, cylinderQuarter.ref.origin.y, cylinderQuarter.ref.origin.z);
-	rlScalef(cylinderQuarter.radius, cylinderQuarter.halfHeight, cylinderQuarter.radius);
 
 	Vector3 vect;
 	float angle;
 	QuaternionToAxisAngle(cylinderQuarter.ref.q, &vect, &angle);
 	rlRotatef(angle * RAD2DEG, vect.x, vect.y, vect.z);
+	rlScalef(cylinderQuarter.radius, cylinderQuarter.halfHeight, cylinderQuarter.radius);
 
 	rlBegin(RL_TRIANGLES);
 	rlColor4ub(color.r, color.g, color.b, color.a);
 
+	Cylindrical cylPoint;
+	cylPoint.rho = 1;
+	cylPoint.y = -1;
+
+	Vector3 point1;
+	Vector3 point2;
+
 	for (int i = 0; i < nSectors; i++)
 	{
-		Cylindrical cylPoint;
-		cylPoint.rho = 1;
 		cylPoint.theta = sectorAngle * i;
-		cylPoint.y = -1;
 
-		Vector3 point1 = CylindricalToCartesian(cylPoint);
+		point1 = CylindricalToCartesian(cylPoint);
 		cylPoint.theta = sectorAngle * (i + 1);
-		Vector3 point2 = CylindricalToCartesian(cylPoint);
+		point2 = CylindricalToCartesian(cylPoint);
 
 		// Premier triangle
 		rlVertex3f(point2.x, 1, point2.z);
@@ -1015,26 +1025,29 @@ void MyDrawWireframeCylinderQuarter(CylinderQuarter cylinderQuarter, int nSector
 
 	rlPushMatrix();
 	rlTranslatef(cylinderQuarter.ref.origin.x, cylinderQuarter.ref.origin.y, cylinderQuarter.ref.origin.z);
-	rlScalef(cylinderQuarter.radius, cylinderQuarter.halfHeight, cylinderQuarter.radius);
 
 	Vector3 vect;
 	float angle;
 	QuaternionToAxisAngle(cylinderQuarter.ref.q, &vect, &angle);
 	rlRotatef(angle * RAD2DEG, vect.x, vect.y, vect.z);
+	rlScalef(cylinderQuarter.radius, cylinderQuarter.halfHeight, cylinderQuarter.radius);
 
 	rlBegin(RL_LINES);
 	rlColor4ub(color.r, color.g, color.b, color.a);
 
+	Cylindrical cylPoint;
+	cylPoint.rho = 1;
+	cylPoint.y = -1;
+	Vector3 point1;
+	Vector3 point2;
+
 	for (int i = 0; i < nSectors; i++)
 	{
-		Cylindrical cylPoint;
-		cylPoint.rho = 1;
 		cylPoint.theta = sectorAngle * i;
-		cylPoint.y = -1;
 
-		Vector3 point1 = CylindricalToCartesian(cylPoint);
+		point1 = CylindricalToCartesian(cylPoint);
 		cylPoint.theta = sectorAngle * (i + 1);
-		Vector3 point2 = CylindricalToCartesian(cylPoint);
+		point2 = CylindricalToCartesian(cylPoint);
 
 		rlVertex3f(point1.x, -1, point1.z);
 		rlVertex3f(point2.x, -1, point2.z);
@@ -1322,7 +1335,7 @@ int main(int argc, char* argv[])
 			// CYLINDER QUARTER DISPLAY TEST
 			ref = ReferenceFrame(
 				 { 0,0,0 },
-				 QuaternionFromAxisAngle(Vector3Normalize({ 1,1,1 }), 0));
+				 QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI/2));
 			CylinderQuarter cylinderQuarter = { ref, 2, 1 };
 			MyDrawCylinderQuarter(cylinderQuarter, 30, true, true, true);
 			

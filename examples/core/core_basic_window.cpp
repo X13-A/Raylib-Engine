@@ -76,12 +76,23 @@ struct Sphere {
 	float radius;
 };
 
+struct SphereCorner {
+	ReferenceFrame ref;
+	float radius;
+};
+
 struct Box {
 	ReferenceFrame ref;
 	Vector3 extents;
 };
 
 struct Cylinder {
+	ReferenceFrame ref;
+	float halfHeight;
+	float radius;
+};
+
+struct CylinderQuarter {
 	ReferenceFrame ref;
 	float halfHeight;
 	float radius;
@@ -659,6 +670,149 @@ void MyDrawSphere(Sphere sphere, int nMeridians, int nParallels, bool drawPolygo
 
 #pragma endregion
 
+#pragma region sphereCorner
+
+void MyDrawPolygonSphereCorner(SphereCorner sphereCorner, int nMeridians, int nParallels, Color color = DARKGRAY)
+{
+	int numVertex = 6 * (nParallels)*nMeridians;
+	if (rlCheckBufferLimit(numVertex)) rlglDraw();
+
+	rlPushMatrix();
+
+	rlTranslatef(sphereCorner.ref.origin.x, sphereCorner.ref.origin.y, sphereCorner.ref.origin.z);
+	Vector3 vect;
+	float angle;
+	QuaternionToAxisAngle(sphereCorner.ref.q, &vect, &angle);
+	rlRotatef(angle * RAD2DEG, vect.x, vect.y, vect.z);
+	rlScalef(sphereCorner.radius, sphereCorner.radius, sphereCorner.radius);
+
+	rlBegin(RL_TRIANGLES);
+	rlColor4ub(color.r, color.g, color.b, color.a);
+
+	float parallelAngle = ((PI / 2) / nParallels);
+	float meridianAngle = (2 * (PI / 4) / nMeridians);
+
+	Spherical sphPoint;
+	Vector3 point;
+	sphPoint.rho = 1;
+
+	for (int j = 0; j < nParallels; j++)
+	{
+		for (int i = 0; i < nMeridians; i++)
+		{
+			// Premier triangle
+			sphPoint.theta = meridianAngle * i;
+			sphPoint.phi = parallelAngle * j;
+			point = SphericalToCartesian(sphPoint);
+			rlVertex3f(point.x, point.y, point.z);
+			sphPoint.phi += parallelAngle;
+			point = SphericalToCartesian(sphPoint);
+			rlVertex3f(point.x, point.y, point.z);
+			sphPoint.theta += meridianAngle;
+			sphPoint.phi -= parallelAngle;
+			point = SphericalToCartesian(sphPoint);
+			rlVertex3f(point.x, point.y, point.z);
+
+			//// Second triangle
+			rlVertex3f(point.x, point.y, point.z);
+			sphPoint.phi += parallelAngle;
+			sphPoint.theta -= meridianAngle;
+			point = SphericalToCartesian(sphPoint);
+			rlVertex3f(point.x, point.y, point.z);
+			sphPoint.theta += meridianAngle;
+			point = SphericalToCartesian(sphPoint);
+			rlVertex3f(point.x, point.y, point.z);
+		}
+	}
+
+	rlEnd();
+	rlPopMatrix();
+}
+
+void MyDrawWireframeSphereCorner(SphereCorner sphereCorner, int nMeridians, int nParallels, Color color = DARKGRAY)
+{
+	int numVertex = 6 * (nParallels)*nMeridians;
+	if (rlCheckBufferLimit(numVertex)) rlglDraw();
+
+	rlPushMatrix();
+
+	rlTranslatef(sphereCorner.ref.origin.x, sphereCorner.ref.origin.y, sphereCorner.ref.origin.z);
+	Vector3 vect;
+	float angle;
+	QuaternionToAxisAngle(sphereCorner.ref.q, &vect, &angle);
+	rlRotatef(angle * RAD2DEG, vect.x, vect.y, vect.z);
+	rlScalef(sphereCorner.radius, sphereCorner.radius, sphereCorner.radius);
+
+	rlBegin(RL_LINES);
+	rlColor4ub(color.r, color.g, color.b, color.a);
+
+	float parallelAngle = ((PI/2) / nParallels);
+	float meridianAngle = (2 * (PI/4) / nMeridians);
+
+	Spherical sphPoint;
+	Vector3 point;
+	sphPoint.rho = 1;
+
+	for (int j = 0; j < nParallels; j++)
+	{
+		for (int i = 0; i < nMeridians; i++)
+		{
+			sphPoint.theta = meridianAngle * i;
+			sphPoint.phi = parallelAngle * j;
+			point = SphericalToCartesian(sphPoint);
+			rlVertex3f(point.x, point.y, point.z);
+			sphPoint.theta += meridianAngle;
+			point = SphericalToCartesian(sphPoint);
+			rlVertex3f(point.x, point.y, point.z);
+
+			rlVertex3f(point.x, point.y, point.z);
+			sphPoint.phi += parallelAngle;
+			sphPoint.theta -= meridianAngle;
+			point = SphericalToCartesian(sphPoint);
+			rlVertex3f(point.x, point.y, point.z);
+
+			rlVertex3f(point.x, point.y, point.z);
+			sphPoint.phi -= parallelAngle;
+			point = SphericalToCartesian(sphPoint);
+			rlVertex3f(point.x, point.y, point.z);
+
+			if (i == nMeridians - 1) {
+				sphPoint.theta = meridianAngle * i;
+				sphPoint.phi = parallelAngle * j;
+				sphPoint.theta += meridianAngle;
+				point = SphericalToCartesian(sphPoint);
+				rlVertex3f(point.x, point.y, point.z);
+
+				sphPoint.phi += parallelAngle;
+				point = SphericalToCartesian(sphPoint);
+				rlVertex3f(point.x, point.y, point.z);
+			}
+			if (j == nParallels - 1) {
+				sphPoint.theta = meridianAngle * i;
+				sphPoint.phi = parallelAngle * j;
+				sphPoint.phi += parallelAngle;
+				point = SphericalToCartesian(sphPoint);
+				rlVertex3f(point.x, point.y, point.z);
+
+				sphPoint.theta += meridianAngle;
+				point = SphericalToCartesian(sphPoint);
+				rlVertex3f(point.x, point.y, point.z);
+			}
+		}
+	}
+
+	rlEnd();
+	rlPopMatrix();
+}
+
+void MyDrawSphereCorner(SphereCorner sphereCorner, int nMeridians, int nParallels, bool drawPolygon = true, bool drawWireframe = true, Color polygonColor = LIGHTGRAY, Color wireframeColor = DARKGRAY)
+{
+	if (drawPolygon) MyDrawPolygonSphereCorner(sphereCorner, nMeridians, nParallels, polygonColor);
+	if (drawWireframe) MyDrawWireframeSphereCorner(sphereCorner, nMeridians, nParallels, wireframeColor);
+}
+
+#pragma endregion
+
 #pragma region cylinder
 
 void MyDrawPolygonCylinder(Cylinder cylinder, int nSectors, bool drawCaps = false, Color color = LIGHTGRAY) {
@@ -792,22 +946,23 @@ void MyDrawCylinder(Cylinder cylinder, int nSectors, bool drawCaps = false, bool
 
 #pragma endregion
 
-#pragma region capsule
+#pragma region cylinderCorner
 
-
-void MyDrawPolygonCapsule(Capsule capsule, int nSectors, int nParallels, Color color = LIGHTGRAY) {
+void MyDrawPolygonCylinderQuarter(CylinderQuarter cylinderQuarter, int nSectors, bool drawCaps = false, Color color = LIGHTGRAY) {
 	int numVertex = nSectors * 6;
+	if (drawCaps) numVertex *= 2;
+
 	if (rlCheckBufferLimit(numVertex)) rlglDraw();
 
-	float sectorAngle = 2 * PI / nSectors;
+	float sectorAngle = (PI / 2) / nSectors;
 
 	rlPushMatrix();
-	rlTranslatef(capsule.ref.origin.x, capsule.ref.origin.y, capsule.ref.origin.z);
-	rlScalef(capsule.radius, capsule.halfHeight + capsule.radius, capsule.radius);
+	rlTranslatef(cylinderQuarter.ref.origin.x, cylinderQuarter.ref.origin.y, cylinderQuarter.ref.origin.z);
+	rlScalef(cylinderQuarter.radius, cylinderQuarter.halfHeight, cylinderQuarter.radius);
 
 	Vector3 vect;
 	float angle;
-	QuaternionToAxisAngle(capsule.ref.q, &vect, &angle);
+	QuaternionToAxisAngle(cylinderQuarter.ref.q, &vect, &angle);
 	rlRotatef(angle * RAD2DEG, vect.x, vect.y, vect.z);
 
 	rlBegin(RL_TRIANGLES);
@@ -816,7 +971,7 @@ void MyDrawPolygonCapsule(Capsule capsule, int nSectors, int nParallels, Color c
 	for (int i = 0; i < nSectors; i++)
 	{
 		Cylindrical cylPoint;
-		cylPoint.rho = capsule.radius;
+		cylPoint.rho = 1;
 		cylPoint.theta = sectorAngle * i;
 		cylPoint.y = -1;
 
@@ -833,20 +988,152 @@ void MyDrawPolygonCapsule(Capsule capsule, int nSectors, int nParallels, Color c
 		rlVertex3f(point1.x, -1, point1.z);
 		rlVertex3f(point2.x, -1, point2.z);
 		rlVertex3f(point2.x, 1, point2.z);
+
+		// Fermeture du cylindre
+		if (drawCaps) {
+			rlVertex3f(0, 1, 0);
+			rlVertex3f(point1.x, 1, point1.z);
+			rlVertex3f(point2.x, 1, point2.z);
+
+			rlVertex3f(0, -1, 0);
+			rlVertex3f(point2.x, -1, point2.z);
+			rlVertex3f(point1.x, -1, point1.z);
+		}
+	}
+
+	rlEnd();
+	rlPopMatrix();
+}
+
+void MyDrawWireframeCylinderQuarter(CylinderQuarter cylinderQuarter, int nSectors, bool drawCaps = false, Color color = LIGHTGRAY) {
+	int numVertex = nSectors * 6;
+	if (drawCaps) numVertex *= 2;
+
+	if (rlCheckBufferLimit(numVertex)) rlglDraw();
+
+	float sectorAngle = (PI/2) / nSectors;
+
+	rlPushMatrix();
+	rlTranslatef(cylinderQuarter.ref.origin.x, cylinderQuarter.ref.origin.y, cylinderQuarter.ref.origin.z);
+	rlScalef(cylinderQuarter.radius, cylinderQuarter.halfHeight, cylinderQuarter.radius);
+
+	Vector3 vect;
+	float angle;
+	QuaternionToAxisAngle(cylinderQuarter.ref.q, &vect, &angle);
+	rlRotatef(angle * RAD2DEG, vect.x, vect.y, vect.z);
+
+	rlBegin(RL_LINES);
+	rlColor4ub(color.r, color.g, color.b, color.a);
+
+	for (int i = 0; i < nSectors; i++)
+	{
+		Cylindrical cylPoint;
+		cylPoint.rho = 1;
+		cylPoint.theta = sectorAngle * i;
+		cylPoint.y = -1;
+
+		Vector3 point1 = CylindricalToCartesian(cylPoint);
+		cylPoint.theta = sectorAngle * (i + 1);
+		Vector3 point2 = CylindricalToCartesian(cylPoint);
+
+		rlVertex3f(point1.x, -1, point1.z);
+		rlVertex3f(point2.x, -1, point2.z);
+
+		rlVertex3f(point1.x, 1, point1.z);
+		rlVertex3f(point2.x, 1, point2.z);
+
+		rlVertex3f(point1.x, -1, point1.z);
+		rlVertex3f(point1.x, 1, point1.z);
+
+		rlVertex3f(point1.x, -1, point1.z);
+		rlVertex3f(point2.x, 1, point2.z);
+
+		if (drawCaps) {
+			rlVertex3f(0, 1, 0);
+			rlVertex3f(point1.x, 1, point1.z);
+
+			rlVertex3f(0, 1, 0);
+			rlVertex3f(point2.x, 1, point2.z);
+
+			rlVertex3f(0, -1, 0);
+			rlVertex3f(point1.x, -1, point1.z);
+
+			rlVertex3f(0, -1, 0);
+			rlVertex3f(point2.x, -1, point2.z);
+		}
+	}
+
+	rlEnd();
+	rlPopMatrix();
+}
+
+void MyDrawCylinderQuarter(CylinderQuarter cylinderQuarter, int nSectors, bool drawCaps = false, bool drawPolygon = true, bool drawWireframe = true, Color polygonColor = LIGHTGRAY, Color wireframeColor = DARKGRAY) {
+	if (drawPolygon) MyDrawPolygonCylinderQuarter(cylinderQuarter, nSectors, drawCaps, polygonColor);
+	if (drawWireframe) MyDrawWireframeCylinderQuarter(cylinderQuarter, nSectors, drawCaps, wireframeColor);
+}
+
+#pragma endregion
+
+#pragma region capsule
+
+
+void MyDrawPolygonCapsule(Capsule capsule, int nSectors, int nParallels, Color color = LIGHTGRAY) {
+	int numVertex = nSectors * 6;
+	if (rlCheckBufferLimit(numVertex)) rlglDraw();
+
+	float sectorAngle = 2 * PI / nSectors;
+
+	rlPushMatrix();
+	rlTranslatef(capsule.ref.origin.x, capsule.ref.origin.y, capsule.ref.origin.z);
+	//rlScalef(capsule.radius, capsule.halfHeight, capsule.radius);
+
+	Vector3 vect;
+	float angle;
+	QuaternionToAxisAngle(capsule.ref.q, &vect, &angle);
+	rlRotatef(angle * RAD2DEG, vect.x, vect.y, vect.z);
+
+	rlBegin(RL_TRIANGLES);
+	rlColor4ub(color.r, color.g, color.b, color.a);
+
+	Cylindrical cylPoint;
+	cylPoint.rho = capsule.radius;
+	for (int i = 0; i < nSectors; i++)
+	{
+		cylPoint.theta = sectorAngle * i;
+		cylPoint.y = -capsule.halfHeight;
+
+		Vector3 point1 = CylindricalToCartesian(cylPoint);
+		cylPoint.theta = sectorAngle * (i + 1);
+		Vector3 point2 = CylindricalToCartesian(cylPoint);
+
+		// Premier triangle
+		rlVertex3f(point2.x, capsule.halfHeight, point2.z);
+		rlVertex3f(point1.x, capsule.halfHeight, point1.z);
+		rlVertex3f(point1.x, -capsule.halfHeight, point1.z);
+
+		// Second triangle
+		rlVertex3f(point1.x, -capsule.halfHeight, point1.z);
+		rlVertex3f(point2.x, -capsule.halfHeight, point2.z);
+		rlVertex3f(point2.x, capsule.halfHeight, point2.z);
 	}
 
 	float parallelAngle = (PI / nParallels);
 	float meridianAngle = (2 * PI / nSectors);
 
 	Vector3 point;
-	Spherical sphTop = CartesianToSpherical({ 0,1,0 });
-	Spherical sphBottom = CartesianToSpherical({ 0,-1,0 });
-	sphTop.rho = 1;
-	sphBottom.rho = 1;
+	Spherical sphTop = CartesianToSpherical({ 0, capsule.halfHeight+capsule.radius, 0 });
+	Spherical sphBottom = CartesianToSpherical({ 0, -capsule.halfHeight-capsule.radius, 0 });
+
+	//sphTop.rho = 0;
+	sphBottom.rho = capsule.radius;
+
+	point = SphericalToCartesian(sphTop);
+	cout << "x: " << point.x << ", y: " << point.y << ", z: " << point.z << "\n";
 
 	// Hemisphère Nord
 	int j = 0;
-	for (; j < nParallels / 2; j++) {
+	for (; j < 2; j++)
+	{
 		for (int i = 0; i <= nSectors; i++)
 		{
 			// Premier triangle
@@ -1027,16 +1314,30 @@ int main(int argc, char* argv[])
 
 			// CYLINDER DISPLAY TEST
 			//ref = ReferenceFrame(
-				// { 0,0,0 },
-				// QuaternionFromAxisAngle(Vector3Normalize({ 1,1,1 }), 0));
+			//	 { 0,0,0 },
+			//	 QuaternionFromAxisAngle(Vector3Normalize({ 1,1,1 }), 0));
 			//Cylinder cylinder = { ref, 5, 3 };
 			//MyDrawCylinder(cylinder, 30, true, true, true);
+
+			// CYLINDER QUARTER DISPLAY TEST
+			ref = ReferenceFrame(
+				 { 0,0,0 },
+				 QuaternionFromAxisAngle(Vector3Normalize({ 1,1,1 }), 0));
+			CylinderQuarter cylinderQuarter = { ref, 2, 1 };
+			MyDrawCylinderQuarter(cylinderQuarter, 30, true, true, true);
+			
+			// SPHERE CORNER DISPLAY TEST
+			//ref = ReferenceFrame(
+			//	 { 0,0,0 },
+			//	 QuaternionFromAxisAngle(Vector3Normalize({ 1,1,1 }), 0));
+			//SphereCorner sphCorner = { ref, 2};
+			//MyDrawSphereCorner(sphCorner, 10, 10, true, true);
 
 			// CAPSULE DISPLAY TEST
 			//ref = ReferenceFrame(
 			//	 { 0,0,0 },
 			//	 QuaternionFromAxisAngle(Vector3Normalize({ 1,1,1 }), 0));
-			//Capsule capsule = { ref, 10, 2 };
+			//Capsule capsule = { ref, 4, 2 };
 			//MyDrawCapsule(capsule, 15, 15, true, true);
 
 		}

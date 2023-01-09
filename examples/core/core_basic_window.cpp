@@ -1,4 +1,6 @@
-﻿#include "raylib.h"
+﻿#pragma region init
+
+#include "raylib.h"
 #include <raymath.h>
 #include "rlgl.h"
 #include <math.h>
@@ -19,6 +21,8 @@ using namespace std;
 template <typename T> int sgn(T val) {
 	return (T(0) < val) - (val < T(0));
 }
+
+#pragma endregion
 
 #pragma region Structs
 
@@ -58,12 +62,6 @@ struct ReferenceFrame {
 struct Quad {
 	ReferenceFrame ref;
 	Vector3 extents;
-};
-
-struct Plane
-{
-	Vector3 n;
-	float d;
 };
 
 struct Disk {
@@ -134,6 +132,37 @@ struct Spherical
 	float theta;
 	float phi;
 };
+
+struct Segment {
+	ReferenceFrame ref;
+	Vector3 a;
+	Vector3 b;
+};
+
+#pragma endregion
+
+#pragma region utils
+
+Vector3 LocalToGlobalVect(Vector3 localVect, ReferenceFrame localRef)
+{
+	return Vector3Add(localVect, localRef.origin);
+}
+
+Vector3 GlobalToLocalVect(Vector3 globalVect, ReferenceFrame localRef)
+{
+
+	return Vector3Subtract(globalVect, localRef.origin);
+}
+
+Vector3 LocalToGlobalPos(Vector3 localPos, ReferenceFrame localRef)
+{
+	return Vector3Add(localPos, localRef.origin);
+}
+
+Vector3 GlobalToLocalPos(Vector3 globalPos, ReferenceFrame localRef)
+{
+	return Vector3Subtract(globalPos, localRef.origin);
+}
 
 #pragma endregion
 
@@ -1307,7 +1336,7 @@ void MyDrawCapsule(Capsule capsule, int nSectors, int nParallels, bool drawPolyg
 
 #pragma endregion
 
-#pragma region RoudedBox
+#pragma region RoundedBox
 
 void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = LIGHTGRAY)
 {
@@ -1757,6 +1786,7 @@ void MyDrawRoundedBox(RoundedBox roundedBox, int nSectors, bool drawPolygon = tr
 
 #pragma endregion
 
+
 int main(int argc, char* argv[])
 {
 	// ICI LES TEST 
@@ -1816,7 +1846,14 @@ int main(int argc, char* argv[])
 			angle += 0.05;
 			Vector3 axes = { 1, 1, 1 };
 
-#pragma region display tests
+			#pragma region display tests
+
+			//PLANE DISPLAY TEST
+			//ref = ReferenceFrame(
+			//	{ camera.position.x, -10, camera.position.z },
+			//	QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
+			//Quad plane = { ref,{10000, 0, 10000} };
+			//MyDrawQuad(plane, true, false, LIGHTGRAY);
 
 			// DISK DISPLAY TEST
 			ref = ReferenceFrame(
@@ -1881,7 +1918,7 @@ int main(int argc, char* argv[])
 			Hemisphere hemisphere = { ref, 2 };
 			MyDrawHemisphere(hemisphere, 15, 15, true, true);
 
-			// ROUDEDBOX DISPLAY TEST
+			// ROUNDEDBOX DISPLAY TEST
 			ref = ReferenceFrame(
 				{ 5,8,0 },
 				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
@@ -1889,7 +1926,16 @@ int main(int argc, char* argv[])
 			RoundedBox roundedBox = { ref, {5,2,3}, 2 };
 			MyDrawRoundedBox(roundedBox, 10, true, true, RED, WHITE);
 
-#pragma endregion
+			#pragma endregion
+
+			#pragma region methods testing
+
+			//Vector3 global = LocalToGlobalVect({ 2,2,1 }, ref);
+			//Vector3 local = GlobalToLocalVect({ 3,8,0 }, ref);
+			//cout << "global: {" << global.x << ", " << global.y << ", " << global.z << "}\n";
+			//cout << "local: {" << local.x << ", " << local.y << ", " << local.z << "}\n";
+
+			#pragma endregion
 		}
 		EndMode3D();
 

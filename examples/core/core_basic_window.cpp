@@ -7,7 +7,7 @@
 #include <float.h>
 #include <vector>
 
-#include <iostream>
+#include <iostream> 	 	 			   		 
 using namespace std;
 
 #if defined(PLATFORM_DESKTOP)
@@ -139,9 +139,19 @@ struct Segment {
 	Vector3 b;
 };
 
+struct Line {
+	Vector3 pt;
+	Vector3 dir;
+};
+
+struct Plane {
+	Vector3 normal;
+	float d;
+};
+
 #pragma endregion
 
-#pragma region utils
+#pragma region Utils
 
 Vector3 LocalToGlobalVect(Vector3 localVect, ReferenceFrame localRef)
 {
@@ -780,8 +790,8 @@ void MyDrawWireframeSphereCorner(SphereCorner sphereCorner, int nMeridians, int 
 	rlBegin(RL_LINES);
 	rlColor4ub(color.r, color.g, color.b, color.a);
 
-	float parallelAngle = ((PI/2) / nParallels);
-	float meridianAngle = (2 * (PI/4) / nMeridians);
+	float parallelAngle = ((PI / 2) / nParallels);
+	float meridianAngle = (2 * (PI / 4) / nMeridians);
 
 	Spherical sphPoint;
 	Vector3 point;
@@ -866,8 +876,8 @@ void MyDrawWireframeHemisphere(Hemisphere hemisphere, int nMeridians, int nParal
 	rlBegin(RL_LINES);
 	rlColor4ub(color.r, color.g, color.b, color.a);
 
-	float parallelAngle = (PI/2) / nParallels;
-	float meridianAngle = (2*PI) / nMeridians;
+	float parallelAngle = (PI / 2) / nParallels;
+	float meridianAngle = (2 * PI) / nMeridians;
 
 	Spherical sphPoint;
 	Vector3 point;
@@ -1183,7 +1193,7 @@ void MyDrawWireframeCylinderQuarter(CylinderQuarter cylinderQuarter, int nSector
 
 	if (rlCheckBufferLimit(numVertex)) rlglDraw();
 
-	float sectorAngle = (PI/2) / nSectors;
+	float sectorAngle = (PI / 2) / nSectors;
 
 	rlPushMatrix();
 	rlTranslatef(cylinderQuarter.ref.origin.x, cylinderQuarter.ref.origin.y, cylinderQuarter.ref.origin.z);
@@ -1267,21 +1277,21 @@ void MyDrawPolygonCapsule(Capsule capsule, int nSectors, int nParallels, Color c
 	rlRotatef(angle * RAD2DEG, vect.x, vect.y, vect.z);
 
 	ReferenceFrame ref = ReferenceFrame(
-		 { 0, 0, 0 },
-		 QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
+		{ 0, 0, 0 },
+		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
 	Cylinder cylinder = { ref, capsule.halfHeight, capsule.radius };
 	MyDrawPolygonCylinder(cylinder, nSectors, false, color);
 
 	ref = ReferenceFrame(
 		{ 0, capsule.halfHeight, 0 },
-		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), PI/2));
+		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), PI / 2));
 	Hemisphere hemisphere = { ref, capsule.radius };
 	MyDrawPolygonHemisphere(hemisphere, nSectors, nParallels, color);
 
-	rlRotatef(PI * RAD2DEG, 1,0,0);
+	rlRotatef(PI * RAD2DEG, 1, 0, 0);
 	ref = ReferenceFrame(
 		{ 0, capsule.halfHeight, 0 },
-		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI ));
+		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI));
 	hemisphere = { ref, capsule.radius };
 	MyDrawPolygonHemisphere(hemisphere, nSectors, nParallels, color);
 
@@ -1355,7 +1365,7 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 	roundedBox.extents.z /= 2;
 	roundedBox.radius /= 2;
 
-	#pragma region Pavé
+#pragma region Pavé
 
 	ReferenceFrame top_ref = ReferenceFrame(
 		{ 0,roundedBox.extents.z + roundedBox.radius,0 },
@@ -1397,19 +1407,19 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 	Quad right_quad = { right_ref,{roundedBox.extents.y,0,roundedBox.extents.z} };
 	MyDrawPolygonQuad(right_quad, color);
 
-	#pragma endregion
+#pragma endregion
 
-	#pragma region Quart de cylindre vertical
+#pragma region Quart de cylindre vertical
 
 	ReferenceFrame first_vertical_ref(
 		{ roundedBox.extents.x,0,roundedBox.extents.y },
-		QuaternionFromAxisAngle(Vector3Normalize({0,0,0}), 0));
+		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
 	CylinderQuarter firstVerticalCylinderQuarter = { first_vertical_ref, roundedBox.extents.z, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(firstVerticalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame second_vertical_ref(
 		{ -roundedBox.extents.x,0,roundedBox.extents.y },
-		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), 3*PI / 2));
+		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), 3 * PI / 2));
 	CylinderQuarter secondVerticalCylinderQuarter = { second_vertical_ref, roundedBox.extents.z, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(secondVerticalCylinderQuarter, nSectors, false, color);
 
@@ -1425,13 +1435,13 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 	CylinderQuarter fourthVerticalCylinderQuarter = { fourth_vertical_ref, roundedBox.extents.z, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(fourthVerticalCylinderQuarter, nSectors, false, color);
 
-	#pragma endregion
+#pragma endregion
 
-	#pragma region Quart de cylindre horizontal face supérieure
+#pragma region Quart de cylindre horizontal face supérieure
 
 	ReferenceFrame first_superior_horizontal_ref(
 		{ 0,roundedBox.extents.z,roundedBox.extents.y },
-		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), PI/ 2));
+		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), PI / 2));
 	CylinderQuarter firstSuperiorHorizontalCylinderQuarter = { first_superior_horizontal_ref, roundedBox.extents.x, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(firstSuperiorHorizontalCylinderQuarter, nSectors, false, color);
 
@@ -1457,9 +1467,9 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 	CylinderQuarter fourthSuperiorHorizontalCylinderQuarter = { fourth_superior_horizontal_ref, roundedBox.extents.y, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(fourthSuperiorHorizontalCylinderQuarter, nSectors, false, color);
 
-	#pragma endregion
+#pragma endregion
 
-	#pragma region Quart de cylindre horizontal face inférieur
+#pragma region Quart de cylindre horizontal face inférieur
 
 	ReferenceFrame first_inferior_horizontal_ref(
 		{ 0,-roundedBox.extents.z,roundedBox.extents.y },
@@ -1489,19 +1499,19 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 	CylinderQuarter fourthInferiorHorizontalCylinderQuarter = { fourth_inferior_horizontal_ref, roundedBox.extents.y, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(fourthInferiorHorizontalCylinderQuarter, nSectors, false, color);
 
-	#pragma endregion
+#pragma endregion
 
-	#pragma region Coin face supérieur
+#pragma region Coin face supérieur
 
 	ReferenceFrame first_superior_corner_ref(
 		{ roundedBox.extents.x,roundedBox.extents.z,roundedBox.extents.y },
-		QuaternionFromAxisAngle(Vector3Normalize({0,0,0}), 0));
-	SphereCorner firstSuperiorCorner = { first_superior_corner_ref, roundedBox.radius};
+		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
+	SphereCorner firstSuperiorCorner = { first_superior_corner_ref, roundedBox.radius };
 	MyDrawPolygonSphereCorner(firstSuperiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame second_superior_corner_ref(
 		{ roundedBox.extents.x,roundedBox.extents.z,-roundedBox.extents.y },
-		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI/ 2));
+		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI / 2));
 	SphereCorner secondSuperiorCorner = { second_superior_corner_ref, roundedBox.radius };
 	MyDrawPolygonSphereCorner(secondSuperiorCorner, nSectors, nSectors, color);
 
@@ -1517,9 +1527,9 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 	SphereCorner fourthSuperiorCorner = { fourth_superior_corner_ref, roundedBox.radius };
 	MyDrawPolygonSphereCorner(fourthSuperiorCorner, nSectors, nSectors, color);
 
-	#pragma endregion
+#pragma endregion
 
-	#pragma region Coin face inférieur
+#pragma region Coin face inférieur
 
 	ReferenceFrame first_inferior_corner_ref(
 		{ roundedBox.extents.x,-roundedBox.extents.z,roundedBox.extents.y },
@@ -1551,7 +1561,7 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 	SphereCorner fourthInferiorCorner = { fourth_inferior_corner_ref, roundedBox.radius };
 	MyDrawPolygonSphereCorner(fourthInferiorCorner, nSectors, nSectors, color);
 
-	#pragma endregion
+#pragma endregion
 
 	rlEnd();
 	rlPopMatrix();
@@ -1786,10 +1796,43 @@ void MyDrawRoundedBox(RoundedBox roundedBox, int nSectors, bool drawPolygon = tr
 
 #pragma endregion
 
+#pragma region Intersections
+
+#pragma region IntersectLinePlane
+
+bool IntersectLinePlane(Line line, Plane plane, float& t, Vector3& interPt, Vector3& interNormal)
+{
+	// no intersection if line is parallel to the plane
+	float dotProd = Vector3DotProduct(plane.normal, line.dir);
+	if (fabsf(dotProd) < EPSILON) return false;
+
+	// intersection: t, interPt & interNormal
+	t = (plane.d - Vector3DotProduct(plane.normal, line.pt)) / dotProd;
+	interPt = Vector3Add(line.pt, Vector3Scale(line.dir, t)); // OM = OA+tAB
+	interNormal = Vector3Scale(plane.normal,Vector3DotProduct(Vector3Subtract(line.pt, interPt), plane.normal) < 0 ? -1.f : 1.f);
+	return true;
+}
+
+//bool IntersectSegmentPlane(Segment seg, Plane plane, float& t, Vector3& interPt, Vector3& interNormal)
+//{
+//
+//}
+//
+//bool IntersectSegmentQuad(Segment seg, Quad quad, float& t, Vector3& interPt, Vector3& interNormal)
+//{
+//
+//}
+
+#pragma endregion
+
+#pragma endregion
+
 
 int main(int argc, char* argv[])
 {
-	// ICI LES TEST 
+	// ICI LES TEST
+
+	#pragma region Init
 
 	// Initialization
 	//--------------------------------------------------------------------------------------
@@ -1812,6 +1855,8 @@ int main(int argc, char* argv[])
 	SetCameraMode(camera, CAMERA_CUSTOM);  // Set an orbital camera mode
 
 	//--------------------------------------------------------------------------------------
+
+	#pragma endregion
 
 	// Main game loop
 	while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -1848,83 +1893,83 @@ int main(int argc, char* argv[])
 
 			#pragma region display tests
 
-			//PLANE DISPLAY TEST
+			////PLANE DISPLAY TEST
 			//ref = ReferenceFrame(
 			//	{ camera.position.x, -10, camera.position.z },
 			//	QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
 			//Quad plane = { ref,{10000, 0, 10000} };
 			//MyDrawQuad(plane, true, false, LIGHTGRAY);
 
-			// DISK DISPLAY TEST
-			ref = ReferenceFrame(
-				{ -20,0,0 },
-				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			Disk disk = { ref, 2 };
-			MyDrawDisk(disk, 15, true, true);
+			//// DISK DISPLAY TEST
+			//ref = ReferenceFrame(
+			//	{ -20,0,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			//Disk disk = { ref, 2 };
+			//MyDrawDisk(disk, 15, true, true);
 
-			//BOX DISPLAY TEST
-			ref = ReferenceFrame(
-				{ -15,0,0 },
-				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			Box box = { ref, {1, 1, 2} };
-			MyDrawBox(box, true, true, BLUE, BLACK);
+			////BOX DISPLAY TEST
+			//ref = ReferenceFrame(
+			//	{ -15,0,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			//Box box = { ref, {1, 1, 2} };
+			//MyDrawBox(box, true, true, BLUE, BLACK);
 
-			//QUAD DISPLAY TEST
-			ref = ReferenceFrame(
-				{ -10,0,0 },
-				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			Quad quad = { ref,{1, 0, 2} };
-			MyDrawQuad(quad, true, true);
+			////QUAD DISPLAY TEST
+			//ref = ReferenceFrame(
+			//	{ -10,0,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			//Quad quad = { ref,{1, 0, 2} };
+			//MyDrawQuad(quad, true, true);
 
-			// SPHERE DISPLAY TEST
-			ref = ReferenceFrame(
-				{ -5,0,0 },
-				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			Sphere sphere = { ref, 2 };
-			MyDrawSphere(sphere, 15, 15, true, true);
+			//// SPHERE DISPLAY TEST
+			//ref = ReferenceFrame(
+			//	{ -5,0,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			//Sphere sphere = { ref, 2 };
+			//MyDrawSphere(sphere, 15, 15, true, true);
 
-			// CYLINDER DISPLAY TEST
-			ref = ReferenceFrame(
-				{ 0,0,0 },
-				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			Cylinder cylinder = { ref, 1, 2 };
-			MyDrawCylinder(cylinder, 15, false, true, true);
+			//// CYLINDER DISPLAY TEST
+			//ref = ReferenceFrame(
+			//	{ 0,0,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			//Cylinder cylinder = { ref, 1, 2 };
+			//MyDrawCylinder(cylinder, 15, false, true, true);
 
-			// CYLINDER QUARTER DISPLAY TEST
-			ref = ReferenceFrame(
-				{ 5,0,0 },
-				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			CylinderQuarter cylinderQuarter = { ref, 1, 2 };
-			MyDrawCylinderQuarter(cylinderQuarter, 30, true, true, true);
+			//// CYLINDER QUARTER DISPLAY TEST
+			//ref = ReferenceFrame(
+			//	{ 5,0,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			//CylinderQuarter cylinderQuarter = { ref, 1, 2 };
+			//MyDrawCylinderQuarter(cylinderQuarter, 30, true, true, true);
 
-			// SPHERE CORNER DISPLAY TEST
-			ref = ReferenceFrame(
-				{ 10,0,0 },
-				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			SphereCorner sphCorner = { ref, 2 };
-			MyDrawSphereCorner(sphCorner, 10, 10, true, true);
+			//// SPHERE CORNER DISPLAY TEST
+			//ref = ReferenceFrame(
+			//	{ 10,0,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			//SphereCorner sphCorner = { ref, 2 };
+			//MyDrawSphereCorner(sphCorner, 10, 10, true, true);
 
-			// CAPSULE DISPLAY TEST
-			ref = ReferenceFrame(
-				{ 15,0,0 },
-				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			Capsule capsule = { ref, 2, 2 };
-			MyDrawCapsule(capsule, 25, 25, true, true, BLUE, WHITE);
+			//// CAPSULE DISPLAY TEST
+			//ref = ReferenceFrame(
+			//	{ 15,0,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			//Capsule capsule = { ref, 2, 2 };
+			//MyDrawCapsule(capsule, 25, 25, true, true, BLUE, WHITE);
 
-			// HEMISPHERE DISPLAY TEST
-			ref = ReferenceFrame(
-				{ 20,0,0 },
-				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			Hemisphere hemisphere = { ref, 2 };
-			MyDrawHemisphere(hemisphere, 15, 15, true, true);
+			//// HEMISPHERE DISPLAY TEST
+			//ref = ReferenceFrame(
+			//	{ 20,0,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			//Hemisphere hemisphere = { ref, 2 };
+			//MyDrawHemisphere(hemisphere, 15, 15, true, true);
 
-			// ROUNDEDBOX DISPLAY TEST
-			ref = ReferenceFrame(
-				{ 5,8,0 },
-				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			/* {ref, {Longeur Largeur Hauteur}, Radius} */
-			RoundedBox roundedBox = { ref, {5,2,3}, 2 };
-			MyDrawRoundedBox(roundedBox, 10, true, true, RED, WHITE);
+			//// ROUNDEDBOX DISPLAY TEST
+			//ref = ReferenceFrame(
+			//	{ 5,8,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			///* {ref, {Longeur Largeur Hauteur}, Radius} */
+			//RoundedBox roundedBox = { ref, {5,2,3}, 2 };
+			//MyDrawRoundedBox(roundedBox, 10, true, true, RED, WHITE);
 
 			#pragma endregion
 
@@ -1936,6 +1981,39 @@ int main(int argc, char* argv[])
 			//cout << "local: {" << local.x << ", " << local.y << ", " << local.z << "}\n";
 
 			#pragma endregion
+
+			#pragma region Intersections
+
+			//TESTS INTERSECTIONS
+			Vector3 interPt;
+			Vector3 interNormal;
+			float t;
+
+			ref = ReferenceFrame(
+				{ 0,0,0 },
+				QuaternionFromAxisAngle(Vector3Normalize({0,0,0}), 0));
+
+			//THE SEGMENT
+			Segment segment = { ref, {-5,8,0},{5,-8,3} };
+			DrawLine3D(segment.a, segment.b, BLACK);
+			MyDrawPolygonSphere({ {segment.a,QuaternionIdentity()},.15f }, 16, 8, RED);
+			MyDrawPolygonSphere({ {segment.b,QuaternionIdentity()},.15f }, 16, 8, GREEN);
+
+			// TEST LINE PLANE INTERSECTION
+			Plane plane = { Vector3RotateByQuaternion({0,1,0}, QuaternionFromAxisAngle({1,0,0},time * .5f)), 2 };
+			ReferenceFrame refQuad = { Vector3Scale(plane.normal, plane.d),
+			QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
+			Quad quad = { refQuad,{10,1,10} };
+			MyDrawQuad(quad);
+			Line line = { segment.a,Vector3Subtract(segment.b,segment.a) };
+			if (IntersectLinePlane(line, plane, t, interPt, interNormal))
+			{
+				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+				DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			}
+
+			#pragma endregion
+
 		}
 		EndMode3D();
 

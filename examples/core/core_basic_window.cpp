@@ -161,7 +161,15 @@ Vector3 LocalToGlobalVect(Vector3 localVect, ReferenceFrame localRef)
 
 Vector3 GlobalToLocalVect(Vector3 globalVect, ReferenceFrame localRef)
 {
-	return Vector3RotateByQuaternion(Vector3Subtract(localRef.origin, globalVect), localRef.q);
+	Vector3 rotationAxis;
+	float angle;
+	QuaternionToAxisAngle(localRef.q, &rotationAxis, &angle);
+	localRef = ReferenceFrame(
+		localRef.origin,
+		QuaternionFromAxisAngle(Vector3Normalize(rotationAxis), -angle));
+
+	globalVect = Vector3RotateByQuaternion(globalVect, localRef.q);
+	return Vector3Subtract(globalVect, localRef.origin);
 }
 
 Vector3 LocalToGlobalPos(Vector3 localPos, ReferenceFrame localRef)
@@ -2028,7 +2036,7 @@ int main(int argc, char* argv[])
 			ref = ReferenceFrame(
 				initialPos,
 				QuaternionFromAxisAngle(Vector3Normalize({0,1,0}), PI/2));
-			Vector3 global = LocalToGlobalVect({ 2,6,1 }, ref);
+			Vector3 global = LocalToGlobalVect({ 2,0,0 }, ref);
 			cout << "global: {" << global.x << ", " << global.y << ", " << global.z << "}\n";
 			Vector3 local = GlobalToLocalVect(global, ref);
 			cout << "local: {" << local.x << ", " << local.y << ", " << local.z << "}\n";

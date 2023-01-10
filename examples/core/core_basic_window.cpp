@@ -173,32 +173,28 @@ Vector3 GlobalToLocalVect(Vector3 globalVect, ReferenceFrame localRef)
 
 Vector3 LocalToGlobalPos(Vector3 localPos, ReferenceFrame localRef)
 {
+	localPos = Vector3RotateByQuaternion(localPos, localRef.q);
 	return Vector3Add(localPos, localRef.origin);
 }
 
 Vector3 GlobalToLocalPos(Vector3 globalPos, ReferenceFrame localRef)
 {
-	return Vector3Subtract(globalPos, localRef.origin);
+	Vector3 localPos = Vector3Subtract(globalPos, localRef.origin);
+
+	Vector3 rotationAxis;
+	float angle;
+	QuaternionToAxisAngle(localRef.q, &rotationAxis, &angle);
+
+	Quaternion invertedQ = QuaternionFromAxisAngle(Vector3Normalize(rotationAxis), -angle);
+	return Vector3RotateByQuaternion(localPos, invertedQ);
 }
 
-Vector3 ProjectedPointOnLine(Vector3 linePt, Vector3 lineUnitDir, Vector3 pt)
-{
-	// Ne marche pas
-	Vector3 p1 = linePt;
-	Vector3 p2 = Vector3Add(p1, lineUnitDir);
-	Vector3 p3 = pt;
-
-	Vector3 sub = Vector3Subtract(p1, p2);
-	sub = Vector3Multiply(sub, sub);
-	float l2 = sub.x + sub.y + sub.z;
-
-	Vector3 proj1 = Vector3Subtract(p3, p1);
-	Vector3 proj2 = Vector3Subtract(p2, p1);
-	Vector3 product = Vector3Multiply(proj1, proj2);
-	product = Vector3Scale(product, 1/l2);
-
-	return product;
+Vector3 ProjectedPointOnLine(Vector3 linePt, Vector3 lineUnitDir, Vector3 pt) {
+	Vector3 v = Vector3Subtract(pt, linePt);  // Vecteur allant de linePt à pt
+	float d = Vector3DotProduct(v, lineUnitDir);  // Distance de pt au point projeté
+	return Vector3Add(linePt, Vector3Scale(lineUnitDir, d));
 }
+
 
 bool IsPointInsideBox(Box box, Vector3 globalPt)
 {
@@ -2034,8 +2030,8 @@ int main(int argc, char* argv[])
 			Vector3 initialPos = { 4,0,0 };
 			ref = ReferenceFrame(
 				initialPos,
-				QuaternionFromAxisAngle(Vector3Normalize({0,1,0}), PI/2));
-			Vector3 global = LocalToGlobalVect({ 2,0,0 }, ref);
+				QuaternionFromAxisAngle(Vector3Normalize({1,1,1}), PI/2));
+			Vector3 global = LocalToGlobalVect({ 2,1,6 }, ref);
 			Vector3 local = GlobalToLocalVect(global, ref);
 
 			cout << "global: {" << global.x << ", " << global.y << ", " << global.z << "}\n";
@@ -2047,19 +2043,17 @@ int main(int argc, char* argv[])
 			MyDrawPolygonSphere({ {initialPos, QuaternionIdentity()},.15f }, 16, 8, BLUE);
 			MyDrawPolygonSphere({ {global, QuaternionIdentity()},.15f }, 16, 8, RED);
 
+			Vector3 unitVect = { 4, 7, 1 };
+			Vector3 lineOrigin = { 0, 0, 0 };
+			Segment segment = { ref, lineOrigin, unitVect };
 
-			
-			//Vector3 unitVect = { 4, 7, 1 };
-			//Vector3 lineOrigin = { 0, 0, 0 };
-			//Segment segment = { ref, lineOrigin, unitVect };
-
-			//Vector3 point = { 2,4,5 };
-			//Vector3 proj = ProjectedPointOnLine(lineOrigin, unitVect, point);
+			Vector3 point = { 2,4,5 };
+			Vector3 proj = ProjectedPointOnLine(lineOrigin, Vector3Normalize(unitVect), point);
 			//cout << "proj: {" << proj.x << ", " << proj.y << ", " << proj.z << "}\n";
-			//Segment projSegment = { ref, point, proj };
+			Segment projSegment = { ref, point, proj };
 
-			//MyDrawSegment(segment);
-			//MyDrawSegment(projSegment);
+			MyDrawSegment(segment);
+			MyDrawSegment(projSegment);
 
 			#pragma endregion
 

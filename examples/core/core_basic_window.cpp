@@ -155,13 +155,13 @@ struct Plane {
 
 Vector3 LocalToGlobalVect(Vector3 localVect, ReferenceFrame localRef)
 {
+	localVect = Vector3RotateByQuaternion(localVect, localRef.q);
 	return Vector3Add(localVect, localRef.origin);
 }
 
 Vector3 GlobalToLocalVect(Vector3 globalVect, ReferenceFrame localRef)
 {
-
-	return Vector3Subtract(globalVect, localRef.origin);
+	return Vector3RotateByQuaternion(Vector3Subtract(localRef.origin, globalVect), localRef.q);
 }
 
 Vector3 LocalToGlobalPos(Vector3 localPos, ReferenceFrame localRef)
@@ -176,8 +176,30 @@ Vector3 GlobalToLocalPos(Vector3 globalPos, ReferenceFrame localRef)
 
 Vector3 ProjectedPointOnLine(Vector3 linePt, Vector3 lineUnitDir, Vector3 pt)
 {
-	return pt;
+	// Ne marche pas
+	Vector3 p1 = linePt;
+	Vector3 p2 = Vector3Add(p1, lineUnitDir);
+	Vector3 p3 = pt;
+
+	Vector3 sub = Vector3Subtract(p1, p2);
+	sub = Vector3Multiply(sub, sub);
+	float l2 = sub.x + sub.y + sub.z;
+
+	Vector3 proj1 = Vector3Subtract(p3, p1);
+	Vector3 proj2 = Vector3Subtract(p2, p1);
+	Vector3 product = Vector3Multiply(proj1, proj2);
+	product = Vector3Scale(product, 1/l2);
+
+	return product;
 }
+
+bool IsPointInsideBox(Box box, Vector3 globalPt)
+{
+	return false;
+	//Vector3 p = globalPt;
+	//if (p.x ) 
+}
+
 
 #pragma endregion
 
@@ -2002,14 +2024,33 @@ int main(int argc, char* argv[])
 
 			#pragma region methods testing
 
-			//Vector3 global = LocalToGlobalVect({ 2,2,1 }, ref);
-			//Vector3 local = GlobalToLocalVect({ 3,8,0 }, ref);
-			//cout << "global: {" << global.x << ", " << global.y << ", " << global.z << "}\n";
-			//cout << "local: {" << local.x << ", " << local.y << ", " << local.z << "}\n";
+			Vector3 initialPos = { 4,0,0 };
+			ref = ReferenceFrame(
+				initialPos,
+				QuaternionFromAxisAngle(Vector3Normalize({0,1,0}), PI/2));
+			Vector3 global = LocalToGlobalVect({ 2,6,1 }, ref);
+			cout << "global: {" << global.x << ", " << global.y << ", " << global.z << "}\n";
+			Vector3 local = GlobalToLocalVect(global, ref);
+			cout << "local: {" << local.x << ", " << local.y << ", " << local.z << "}\n";
+			//global = LocalToGlobalVect(local, ref);
+			//cout << "newGlobal: {" << global.x << ", " << global.y << ", " << global.z << "}\n";
+
+			MyDrawPolygonSphere({ {initialPos, QuaternionIdentity()},.15f }, 16, 8, BLUE);
+			MyDrawPolygonSphere({ {global, QuaternionIdentity()},.15f }, 16, 8, RED);
+
+
 			
-			Vector3 unitVect = { 1, 0.5, 1 };
-			Segment segment = { ref, {0,0,0}, unitVect };
-			MyDrawSegment(segment);
+			//Vector3 unitVect = { 4, 7, 1 };
+			//Vector3 lineOrigin = { 0, 0, 0 };
+			//Segment segment = { ref, lineOrigin, unitVect };
+
+			//Vector3 point = { 2,4,5 };
+			//Vector3 proj = ProjectedPointOnLine(lineOrigin, unitVect, point);
+			//cout << "proj: {" << proj.x << ", " << proj.y << ", " << proj.z << "}\n";
+			//Segment projSegment = { ref, point, proj };
+
+			//MyDrawSegment(segment);
+			//MyDrawSegment(projSegment);
 
 			#pragma endregion
 

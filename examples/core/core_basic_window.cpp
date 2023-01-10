@@ -1350,6 +1350,11 @@ void MyDrawCapsule(Capsule capsule, int nSectors, int nParallels, bool drawPolyg
 
 void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = LIGHTGRAY)
 {
+	int numVertex = 6 * 6; // Quads
+	numVertex += 12 * nSectors * 6; // Cylinder quarters
+	numVertex += 8 * 6 * nSectors * nSectors; // Sphere corners
+	if (rlCheckBufferLimit(numVertex)) rlglDraw();
+
 	rlPushMatrix();
 
 	rlTranslatef(roundedBox.ref.origin.x, roundedBox.ref.origin.y, roundedBox.ref.origin.z);
@@ -1569,6 +1574,13 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 
 void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color = DARKGRAY)
 {
+	int numVertex = 6 * 10; // Quads
+	numVertex += 12 * nSectors * 8; // Cylinder quarters
+	numVertex += 8 * ((6 * nSectors * nSectors) + (2 * nSectors) + (2 * nSectors)); // Sphere corners
+	
+	if (rlCheckBufferLimit(numVertex)) rlglDraw();
+
+
 	rlPushMatrix();
 
 	rlTranslatef(roundedBox.ref.origin.x, roundedBox.ref.origin.y, roundedBox.ref.origin.z);

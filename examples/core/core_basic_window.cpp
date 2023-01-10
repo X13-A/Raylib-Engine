@@ -174,6 +174,11 @@ Vector3 GlobalToLocalPos(Vector3 globalPos, ReferenceFrame localRef)
 	return Vector3Subtract(globalPos, localRef.origin);
 }
 
+Vector3 ProjectedPointOnLine(Vector3 linePt, Vector3 lineUnitDir, Vector3 pt)
+{
+	return pt;
+}
+
 #pragma endregion
 
 #pragma region Conversion
@@ -1580,7 +1585,6 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 	
 	if (rlCheckBufferLimit(numVertex)) rlglDraw();
 
-
 	rlPushMatrix();
 
 	rlTranslatef(roundedBox.ref.origin.x, roundedBox.ref.origin.y, roundedBox.ref.origin.z);
@@ -1806,6 +1810,17 @@ void MyDrawRoundedBox(RoundedBox roundedBox, int nSectors, bool drawPolygon = tr
 
 #pragma endregion
 
+#pragma region segment
+
+void MyDrawSegment(Segment segment, Color colorA = RED, Color colorB = GREEN, Color color = BLACK) {
+	DrawLine3D(segment.a, segment.b, color);
+	MyDrawPolygonSphere({ {segment.a,QuaternionIdentity()},.15f }, 16, 8, colorA);
+	MyDrawPolygonSphere({ {segment.b,QuaternionIdentity()},.15f }, 16, 8, colorB);
+
+}
+
+#pragma endregion
+
 #pragma endregion
 
 #pragma region Intersections
@@ -1991,38 +2006,42 @@ int main(int argc, char* argv[])
 			//Vector3 local = GlobalToLocalVect({ 3,8,0 }, ref);
 			//cout << "global: {" << global.x << ", " << global.y << ", " << global.z << "}\n";
 			//cout << "local: {" << local.x << ", " << local.y << ", " << local.z << "}\n";
+			
+			Vector3 unitVect = { 1, 0.5, 1 };
+			Segment segment = { ref, {0,0,0}, unitVect };
+			MyDrawSegment(segment);
 
 			#pragma endregion
 
 			#pragma region Intersections
 
 			//TESTS INTERSECTIONS
-			Vector3 interPt;
-			Vector3 interNormal;
-			float t;
+			//Vector3 interPt;
+			//Vector3 interNormal;
+			//float t;
 
-			ref = ReferenceFrame(
-				{ 0,0,0 },
-				QuaternionFromAxisAngle(Vector3Normalize({0,0,0}), 0));
+			//ref = ReferenceFrame(
+			//	{ 0,0,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize({0,0,0}), 0));
 
-			//THE SEGMENT
-			Segment segment = { ref, {-5,8,0},{5,-8,3} };
-			DrawLine3D(segment.a, segment.b, BLACK);
-			MyDrawPolygonSphere({ {segment.a,QuaternionIdentity()},.15f }, 16, 8, RED);
-			MyDrawPolygonSphere({ {segment.b,QuaternionIdentity()},.15f }, 16, 8, GREEN);
+			////THE SEGMENT
+			//Segment segment = { ref, {-5,8,0},{5,-8,3} };
+			//DrawLine3D(segment.a, segment.b, BLACK);
+			//MyDrawPolygonSphere({ {segment.a,QuaternionIdentity()},.15f }, 16, 8, RED);
+			//MyDrawPolygonSphere({ {segment.b,QuaternionIdentity()},.15f }, 16, 8, GREEN);
 
 			// TEST LINE PLANE INTERSECTION
-			Plane plane = { Vector3RotateByQuaternion({0,1,0}, QuaternionFromAxisAngle({1,0,0},time * .5f)), 2 };
-			ReferenceFrame refQuad = { Vector3Scale(plane.normal, plane.d),
-			QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
-			Quad quad = { refQuad,{10,1,10} };
-			MyDrawQuad(quad);
-			Line line = { segment.a,Vector3Subtract(segment.b,segment.a) };
-			if (IntersectLinePlane(line, plane, t, interPt, interNormal))
-			{
-				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
-				DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
-			}
+			//Plane plane = { Vector3RotateByQuaternion({0,1,0}, QuaternionFromAxisAngle({1,0,0},time * .5f)), 2 };
+			//ReferenceFrame refQuad = { Vector3Scale(plane.normal, plane.d),
+			//QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
+			//Quad quad = { refQuad,{10,1,10} };
+			//MyDrawQuad(quad);
+			//Line line = { segment.a,Vector3Subtract(segment.b,segment.a) };
+			//if (IntersectLinePlane(line, plane, t, interPt, interNormal))
+			//{
+			//	MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+			//	DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			//}
 
 			#pragma endregion
 

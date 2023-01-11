@@ -198,9 +198,11 @@ Vector3 ProjectedPointOnLine(Vector3 linePt, Vector3 lineUnitDir, Vector3 pt) {
 
 bool IsPointInsideBox(Box box, Vector3 globalPt)
 {
-	return false;
-	//Vector3 p = globalPt;
-	//if (p.x ) 
+	Vector3 localPt = GlobalToLocalPos(globalPt, box.ref);
+	bool w = localPt.x > -box.extents.x && localPt.x < box.extents.x;
+	bool h = localPt.y > -box.extents.y && localPt.y < box.extents.y;
+	bool d = localPt.z > -box.extents.z && localPt.z < box.extents.z;
+	return (w && h && d);
 }
 
 
@@ -1945,7 +1947,7 @@ int main(int argc, char* argv[])
 
 			#pragma region display tests
 
-			////PLANE DISPLAY TEST
+			//PLANE DISPLAY TEST
 			//ref = ReferenceFrame(
 			//	{ camera.position.x, -10, camera.position.z },
 			//	QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
@@ -1960,11 +1962,19 @@ int main(int argc, char* argv[])
 			//MyDrawDisk(disk, 15, true, true);
 
 			////BOX DISPLAY TEST
-			//ref = ReferenceFrame(
-			//	{ -15,0,0 },
-			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			//Box box = { ref, {1, 1, 2} };
-			//MyDrawBox(box, true, true, BLUE, BLACK);
+			ref = ReferenceFrame(
+				{ 0,0,0 },
+				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			Box box = { ref, {1, 1, 2} };
+			MyDrawBox(box, true, true, BLUE, BLACK);
+
+			Vector3 sphPos = { 1.8,0,0 };
+			ref = ReferenceFrame(
+				sphPos,
+				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			Sphere sphere = { ref, .15f };
+			MyDrawSphere(sphere, 10, 10, true, true, GREEN, BLACK);
+			cout << IsPointInsideBox(box, sphPos) << "\n";
 
 			////QUAD DISPLAY TEST
 			//ref = ReferenceFrame(
@@ -2027,33 +2037,33 @@ int main(int argc, char* argv[])
 
 			#pragma region methods testing
 
-			Vector3 initialPos = { 4,0,0 };
-			ref = ReferenceFrame(
-				initialPos,
-				QuaternionFromAxisAngle(Vector3Normalize({1,1,1}), PI/2));
-			Vector3 global = LocalToGlobalVect({ 2,1,6 }, ref);
-			Vector3 local = GlobalToLocalVect(global, ref);
+			//Vector3 initialPos = { 4,0,0 };
+			//ref = ReferenceFrame(
+			//	initialPos,
+			//	QuaternionFromAxisAngle(Vector3Normalize({1,1,1}), PI/2));
+			//Vector3 global = LocalToGlobalVect({ 2,1,6 }, ref);
+			//Vector3 local = GlobalToLocalVect(global, ref);
 
-			cout << "global: {" << global.x << ", " << global.y << ", " << global.z << "}\n";
-			cout << "local: {" << local.x << ", " << local.y << ", " << local.z << "}\n";
+			//cout << "global: {" << global.x << ", " << global.y << ", " << global.z << "}\n";
+			//cout << "local: {" << local.x << ", " << local.y << ", " << local.z << "}\n";
 
-			global = LocalToGlobalVect(local, ref);
-			cout << "newGlobal: {" << global.x << ", " << global.y << ", " << global.z << "}\n";
+			//global = LocalToGlobalVect(local, ref);
+			//cout << "newGlobal: {" << global.x << ", " << global.y << ", " << global.z << "}\n";
 
-			MyDrawPolygonSphere({ {initialPos, QuaternionIdentity()},.15f }, 16, 8, BLUE);
-			MyDrawPolygonSphere({ {global, QuaternionIdentity()},.15f }, 16, 8, RED);
+			//MyDrawPolygonSphere({ {initialPos, QuaternionIdentity()},.15f }, 16, 8, BLUE);
+			//MyDrawPolygonSphere({ {global, QuaternionIdentity()},.15f }, 16, 8, RED);
 
-			Vector3 unitVect = { 4, 7, 1 };
-			Vector3 lineOrigin = { 0, 0, 0 };
-			Segment segment = { ref, lineOrigin, unitVect };
+			//Vector3 unitVect = { 4, 7, 1 };
+			//Vector3 lineOrigin = { 0, 0, 0 };
+			//Segment segment = { ref, lineOrigin, unitVect };
 
-			Vector3 point = { 2,4,5 };
-			Vector3 proj = ProjectedPointOnLine(lineOrigin, Vector3Normalize(unitVect), point);
-			//cout << "proj: {" << proj.x << ", " << proj.y << ", " << proj.z << "}\n";
-			Segment projSegment = { ref, point, proj };
+			//Vector3 point = { 2,4,5 };
+			//Vector3 proj = ProjectedPointOnLine(lineOrigin, Vector3Normalize(unitVect), point);
+			////cout << "proj: {" << proj.x << ", " << proj.y << ", " << proj.z << "}\n";
+			//Segment projSegment = { ref, point, proj };
 
-			MyDrawSegment(segment);
-			MyDrawSegment(projSegment);
+			//MyDrawSegment(segment);
+			//MyDrawSegment(projSegment);
 
 			#pragma endregion
 

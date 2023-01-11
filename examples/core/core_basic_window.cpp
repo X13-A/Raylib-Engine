@@ -205,7 +205,6 @@ bool IsPointInsideBox(Box box, Vector3 globalPt)
 	return (w && h && d);
 }
 
-
 #pragma endregion
 
 #pragma region Conversion
@@ -1867,10 +1866,19 @@ bool IntersectLinePlane(Line line, Plane plane, float& t, Vector3& interPt, Vect
 	return true;
 }
 
-//bool IntersectSegmentPlane(Segment seg, Plane plane, float& t, Vector3& interPt, Vector3& interNormal)
-//{
-//
-//}
+bool IntersectSegmentPlane(Segment seg, Plane plane, float& t, Vector3& interPt, Vector3& interNormal) {
+	Line line;
+	line.pt = seg.ref.origin;
+	line.dir = Vector3Subtract(seg.b, seg.a);
+	// intersect line and plane
+	if (!IntersectLinePlane(line, plane, t, interPt, interNormal)) return false;
+	else {
+		// Vérifier si l'intersection est dans le segment
+		return true;
+	}
+}
+
+
 //
 //bool IntersectSegmentQuad(Segment seg, Quad quad, float& t, Vector3& interPt, Vector3& interNormal)
 //{
@@ -1962,19 +1970,19 @@ int main(int argc, char* argv[])
 			//MyDrawDisk(disk, 15, true, true);
 
 			////BOX DISPLAY TEST
-			ref = ReferenceFrame(
-				{ 0,0,0 },
-				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			Box box = { ref, {1, 1, 2} };
-			MyDrawBox(box, true, true, BLUE, BLACK);
+			//ref = ReferenceFrame(
+			//	{ 0,0,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			//Box box = { ref, {1, 1, 2} };
+			//MyDrawBox(box, true, true, BLUE, BLACK);
 
-			Vector3 sphPos = { 1.8,0,0 };
-			ref = ReferenceFrame(
-				sphPos,
-				QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			Sphere sphere = { ref, .15f };
-			MyDrawSphere(sphere, 10, 10, true, true, GREEN, BLACK);
-			cout << IsPointInsideBox(box, sphPos) << "\n";
+			//Vector3 sphPos = { 1.8,0,0 };
+			//ref = ReferenceFrame(
+			//	sphPos,
+			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+			//Sphere sphere = { ref, .15f };
+			//MyDrawSphere(sphere, 10, 10, true, true, GREEN, BLACK);
+			//cout << IsPointInsideBox(box, sphPos) << "\n";
 
 			////QUAD DISPLAY TEST
 			//ref = ReferenceFrame(
@@ -2074,20 +2082,16 @@ int main(int argc, char* argv[])
 			//Vector3 interNormal;
 			//float t;
 
-			//ref = ReferenceFrame(
-			//	{ 0,0,0 },
-			//	QuaternionFromAxisAngle(Vector3Normalize({0,0,0}), 0));
-
-			////THE SEGMENT
-			//Segment segment = { ref, {-5,8,0},{5,-8,3} };
-			//DrawLine3D(segment.a, segment.b, BLACK);
-			//MyDrawPolygonSphere({ {segment.a,QuaternionIdentity()},.15f }, 16, 8, RED);
-			//MyDrawPolygonSphere({ {segment.b,QuaternionIdentity()},.15f }, 16, 8, GREEN);
+			ref = ReferenceFrame(
+				{ 0,0,0 },
+				QuaternionFromAxisAngle(Vector3Normalize({0,0,0}), 0));
 
 			// TEST LINE PLANE INTERSECTION
+			//Segment segment = { ref, {-5,8,0},{5,-8,3} };
+			//MyDrawSegment(segment);
 			//Plane plane = { Vector3RotateByQuaternion({0,1,0}, QuaternionFromAxisAngle({1,0,0},time * .5f)), 2 };
 			//ReferenceFrame refQuad = { Vector3Scale(plane.normal, plane.d),
-			//QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
+			//						   QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
 			//Quad quad = { refQuad,{10,1,10} };
 			//MyDrawQuad(quad);
 			//Line line = { segment.a,Vector3Subtract(segment.b,segment.a) };
@@ -2096,6 +2100,23 @@ int main(int argc, char* argv[])
 			//	MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
 			//	DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
 			//}
+
+			// TEST SEGMENT PLANE INTERSECTION
+			Segment segment = { ref, {-5,8,0},{5,-8,3} };
+			MyDrawSegment(segment);
+			Plane plane = { Vector3RotateByQuaternion({0,1,0}, QuaternionFromAxisAngle({1,0,0},time * .5f)), 2 };
+			ReferenceFrame refQuad = { Vector3Scale(plane.normal, plane.d),
+									   QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
+			Quad quad = { refQuad,{10,1,10} };
+			MyDrawQuad(quad);
+			float t;
+			Vector3 interPt;
+			Vector3 interNormal;
+			if (IntersectSegmentPlane(segment, plane, t, interPt, interNormal))
+			{
+				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+				DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			}
 
 			#pragma endregion
 

@@ -1840,9 +1840,12 @@ void MyDrawRoundedBox(RoundedBox roundedBox, int nSectors, bool drawPolygon = tr
 #pragma region segment
 
 void MyDrawSegment(Segment segment, Color colorA = RED, Color colorB = GREEN, Color color = BLACK) {
-	DrawLine3D(segment.a, segment.b, color);
-	MyDrawPolygonSphere({ {segment.a,QuaternionIdentity()},.15f }, 16, 8, colorA);
-	MyDrawPolygonSphere({ {segment.b,QuaternionIdentity()},.15f }, 16, 8, colorB);
+	Vector3 a = LocalToGlobalPos(segment.a, segment.ref);
+	Vector3 b = LocalToGlobalPos(segment.b, segment.ref);
+
+	DrawLine3D(a, b, color);
+	MyDrawPolygonSphere({ {a,QuaternionIdentity()},.15f }, 16, 8, colorA);
+	MyDrawPolygonSphere({ {b,QuaternionIdentity()},.15f }, 16, 8, colorB);
 
 }
 
@@ -1883,20 +1886,69 @@ bool IntersectSegmentPlane(Segment segment, Plane plane, float& t, Vector3& inte
 	return true;
 }
 
-bool IntersectSegmentQuad(Segment seg, Quad quad, float& t, Vector3& interPt, Vector3& interNormal)
+bool IntersectSegmentQuad(Segment segment, Quad quad, float& t, Vector3& interPt, Vector3& interNormal)
 {
-	// Check for intersection between the segment and the plane of the quad
-	if (!IntersectSegmentPlane(seg, quad.plane, t, interPt, interNormal)) return false;
+	// create a plane from the quad's reference frame
+	Plane plane;
+	plane.normal = quad.ref.origin;
+	plane.d = Vector3DotProduct(quad.ref.origin, plane.normal);
 
-	// check if intersection point is inside the quad
-	Vector3 quadPt = Vector3TransformCoord(interPt, quad.ref);
-	if (quadPt.x < -quad.extents.x || quadPt.x > quad.extents.x ||
-		quadPt.y < -quad.extents.y || quadPt.y > quad.extents.y)
-	{
-		return false;
-	}
+	// check for intersection between the segment and the plane
+	if (!IntersectSegmentPlane(segment, plane, t, interPt, interNormal)) return false;
+
+	// check if the intersection point is inside the quad
+	if (fabsf(interPt.x) > fabsf(quad.extents.x) || fabsf(interPt.z) > fabsf(quad.extents.z)) return false;
+
 	return true;
 }
+
+bool IntersectSegmentSphere(Segment seg, Sphere s, float& t, Vector3& interPt, Vector3& interNormal)
+{
+	// revérifier tous les référentiels
+	Vector3 OA = LocalToGlobalPos(seg.a, seg.ref);
+	Vector3 AB = Vector3Subtract(seg.b, seg.a);
+
+	Vector3 A_sphereRef = GlobalToLocalPos(LocalToGlobalPos(seg.a, seg.ref), s.ref);
+	float AB_dot = Vector3DotProduct(AB, AB);
+	float A_sphereRef_Dot = Vector3DotProduct(AB, A_sphereRef);
+	t = A_sphereRef_Dot / AB_dot;
+	cout << t << "\n";
+	if (t < 0 || t > 1) return false;
+
+	Vector3 OM = Vector3Add(OA, Vector3Scale(AB, t));
+	interPt = LocalToGlobalPos(OM, s.ref);
+
+	cout << "a: " << Vector3DotProduct(, OM) << ", b: " << (s.radius * s.radius) << "\n";
+	if (Vector3DotProduct(OM, OM) == (s.radius * s.radius))
+	{
+		return true;
+	}
+
+	// 
+	//if (t < 0 || t > 1) return false;
+	//interPt = LocalToGlobalPos(Vector3Add(seg.a, Vector3Scale(segDir, t)), s.ref);
+	//Vector3 spherePos = Vector3RotateByQuaternion(s.ref.origin, s.ref.q);
+	//float dist = Vector3Distance(interPt, spherePos);
+	//if (dist > s.radius) return false;
+
+	//interNormal = Vector3Normalize(Vector3Subtract(interPt, spherePos));
+	return true;
+}
+
+//bool IntersectSegmentQuad(Segment seg, Quad quad, float& t, Vector3& interPt, Vector3& interNormal)
+//{
+//	// Check for intersection between the segment and the plane of the quad
+//	if (!IntersectSegmentPlane(seg, quad.plane, t, interPt, interNormal)) return false;
+//
+//	// check if intersection point is inside the quad
+//	Vector3 quadPt = Vector3TransformCoord(interPt, quad.ref);
+//	if (quadPt.x < -quad.extents.x || quadPt.x > quad.extents.x ||
+//		quadPt.y < -quad.extents.y || quadPt.y > quad.extents.y)
+//	{
+//		return false;
+//	}
+//	return true;
+//}
 
 #pragma endregion
 
@@ -2096,7 +2148,7 @@ int main(int argc, char* argv[])
 			float t;
 
 			ref = ReferenceFrame(
-				{ 0,0,0 },
+				{ 5,5,5 },
 				QuaternionFromAxisAngle(Vector3Normalize({0,0,0}), 0));
 
 			// TEST LINE PLANE INTERSECTION
@@ -2116,19 +2168,43 @@ int main(int argc, char* argv[])
 			}*/
 
 			// TEST SEGMENT PLANE INTERSECTION
-			/*Segment segment = { ref, {-5,8,0},{5,-8,3} };
-			MyDrawSegment(segment);
-			Plane plane = { Vector3RotateByQuaternion({0,1,0}, QuaternionFromAxisAngle({1,0,0},time * .5f)), 2 };
-			ReferenceFrame refQuad = { Vector3Scale(plane.normal, plane.d),
-									   QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
-			Quad quad = { refQuad,{10,1,10} };
-			MyDrawQuad(quad);
-			if (IntersectSegmentPlane(segment, plane, t, interPt, interNormal))
-			{
+			//Segment segment = { ref, {-5,8,0},{5,-8,3} };
+			//MyDrawSegment(segment);
+			//Plane plane = { Vector3RotateByQuaternion({0,1,0}, QuaternionFromAxisAngle({1,0,0},time * .5f)), 2 };
+			//ReferenceFrame refQuad = { Vector3Scale(plane.normal, plane.d),
+			//						   QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
+			//Quad quad = { refQuad,{10,1,10} };
+			//MyDrawQuad(quad);
+			//if (IntersectSegmentPlane(segment, plane, t, interPt, interNormal))
+			//{
+			//	if (t) printf("True\n");
+			//	MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+			//	DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			//}
+
+			// TEST SEGMENT SPHERE INTERSECTION
+			Sphere sphere = { ref, 2 };
+			MyDrawSphere(sphere, 50, 50);
+			Segment seg = { ref, {1.5,-1,0}, {1.5,5,0} };
+			MyDrawSegment(seg);
+			if (IntersectSegmentSphere(seg, sphere, t, interPt, interNormal)) {
+				cout << "interPt: {" << interPt.x << ", " << interPt.y << ", " << interPt.z << "}\n";
+				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, BLUE);
 				if (t) printf("True\n");
-				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
-				DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
-			}*/
+			}
+
+			//DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			//Plane plane = { Vector3RotateByQuaternion({0,1,0}, QuaternionFromAxisAngle({1,0,0},time * .5f)), 2 };
+			//ReferenceFrame refQuad = { Vector3Scale(plane.normal, plane.d),
+			//						   QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
+			//Quad quad = { refQuad,{10,1,10} };
+			//MyDrawQuad(quad);
+			//if (IntersectSegmentPlane(segment, plane, t, interPt, interNormal))
+			//{
+			//	if (t) printf("True\n");
+			//	MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+			//	DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			//}
 
 			#pragma endregion
 

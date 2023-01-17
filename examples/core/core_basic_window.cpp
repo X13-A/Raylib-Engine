@@ -1900,38 +1900,55 @@ bool IntersectSegmentQuad(Segment segment, Quad quad, float& t, Vector3& interPt
 	return true;
 }
 
-//bool IntersectSegmentSphere(Segment seg, Sphere s, float& t, Vector3& interPt, Vector3& interNormal)
-//{
-//	// revérifier tous les référentiels
-//	Vector3 OA = LocalToGlobalPos(seg.a, seg.ref);
-//	Vector3 AB = Vector3Subtract(seg.b, seg.a);
-//
-//	Vector3 A_sphereRef = GlobalToLocalPos(LocalToGlobalPos(seg.a, seg.ref), s.ref);
-//	float AB_dot = Vector3DotProduct(AB, AB);
-//	float A_sphereRef_Dot = Vector3DotProduct(AB, A_sphereRef);
-//	t = A_sphereRef_Dot / AB_dot;
-//	cout << t << "\n";
-//	if (t < 0 || t > 1) return false;
-//
-//	Vector3 OM = Vector3Add(OA, Vector3Scale(AB, t));
-//	interPt = LocalToGlobalPos(OM, s.ref);
-//
-//	cout << "a: " << Vector3DotProduct(, OM) << ", b: " << (s.radius * s.radius) << "\n";
-//	if (Vector3DotProduct(OM, OM) == (s.radius * s.radius))
-//	{
-//		return true;
-//	}
-//
-//	// 
-//	//if (t < 0 || t > 1) return false;
-//	//interPt = LocalToGlobalPos(Vector3Add(seg.a, Vector3Scale(segDir, t)), s.ref);
-//	//Vector3 spherePos = Vector3RotateByQuaternion(s.ref.origin, s.ref.q);
-//	//float dist = Vector3Distance(interPt, spherePos);
-//	//if (dist > s.radius) return false;
-//
-//	//interNormal = Vector3Normalize(Vector3Subtract(interPt, spherePos));
-//	return true;
-//}
+bool IntersectSegmentSphere(Segment seg, Sphere s, float& t, Vector3& interPt, Vector3& interNormal)
+{
+	// Origine du segment
+	Vector3 Ro = LocalToGlobalPos(seg.a, seg.ref);
+
+	// Direction du segment
+	Vector3 Rd = Vector3Subtract(LocalToGlobalPos(seg.b, seg.ref), LocalToGlobalPos(seg.a, seg.ref));
+
+	// Origine de la sphère
+	Vector3 S = s.ref.origin;
+
+	// Point le plus proche de l'origine de la sphère qui est sur le segment
+	Vector3 tp = ProjectedPointOnLine(Ro, Vector3Normalize(Rd), S);
+
+	// Calcul de la distance entre tp et la surface de la sphère
+	float r = s.radius;
+	float y = Vector3Distance(S, tp);
+	if (y > r) return false;
+	float x = sqrt((r * r - y * y));
+
+	// Calcul des ratios menant aux points d'intersection
+	float t0 = Vector3Distance(Ro, tp) / Vector3Distance(seg.a, seg.b);
+	float t1 = t0 - x / Vector3Distance(seg.a, seg.b);
+	float t2 = t0 + x / Vector3Distance(seg.a, seg.b);
+
+	// Calcul des points d'intersection
+	Vector3 tp1 = Vector3Add(Ro, Vector3Scale(Rd, t1));
+	Vector3 tp2 = Vector3Add(Ro, Vector3Scale(Rd, t2));
+
+	// Calcul des distances entre les points et l'origine du segment
+	float tp1Dist = Vector3Distance(tp1, Ro);
+	float tp2Dist = Vector3Distance(tp2, Ro);
+
+	// Calcul du point le plus proche
+	if (tp1Dist < tp2Dist)
+	{
+		t = t1;
+		interPt = tp1;
+	}
+	else
+	{
+		t = t2;
+		interPt = tp2;
+	}
+
+	interNormal = Vector3Normalize(Vector3Subtract(interPt, S));
+	return true;
+}
+
 
 bool IntersectSegmentDisk(Segment segment, Disk disk, float& t, Vector3& interPt, Vector3& interNormal)
 {
@@ -2145,7 +2162,7 @@ int main(int argc, char* argv[])
 			float t;
 
 			ref = ReferenceFrame(
-				{ 2,2,0 },
+				{ 0,0,0 },
 				QuaternionFromAxisAngle(Vector3Normalize({0,0,0}), 0));
 
 			// TEST LINE PLANE INTERSECTION
@@ -2196,32 +2213,52 @@ int main(int argc, char* argv[])
 			}
 			cout << "res: " << test << "\n";*/
 
-			// TEST SEGMENT SPHERE INTERSECTION
-			/*Sphere sphere = { ref, 2 };
-			MyDrawSphere(sphere, 50, 50);
-			Segment seg = { ref, {1.5,-1,0}, {1.5,5,0} };
-			MyDrawSegment(seg);
-			if (IntersectSegmentSphere(seg, sphere, t, interPt, interNormal)) {
-				cout << "interPt: {" << interPt.x << ", " << interPt.y << ", " << interPt.z << "}\n";
-				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, BLUE);
-				if (t) printf("True\n");
-			}*/
+			// TEST SEGMENT SPHERE INTERSECTION SIMPLE
+			//Segment segment = { ref, {-5,0,0}, {5,0,0} };
+			//MyDrawSegment(segment);
+			//ReferenceFrame refSphere = { {0,0,0}, QuaternionIdentity() };
+			//Sphere sphere = { refSphere, 1 };
+			//MyDrawSphere(sphere, 15, 15);
+			//bool test = IntersectSegmentSphere(segment, sphere, t, interPt, interNormal);
+			//if (test)
+			//{
+			//	MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, BLUE);
+			//	DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			//}
+			//cout << "res: " << test << "\n";
 
-			// TEST SEGMENT DISK INTERSECTION
-			Segment segment = { ref, {-5,8,0},{5,-8,3} };
+			// TEST SEGMENT SPHERE INTERSECTION ROTATE
+			Segment segment = { ref,{5,-5,10}, {1,6,0} };
 			MyDrawSegment(segment);
 			Plane plane = { Vector3RotateByQuaternion({0,1,0}, QuaternionFromAxisAngle({1,0,0},time * .5f)), 2 };
-			ReferenceFrame refDisk = { Vector3Scale(plane.normal, plane.d),
+			ReferenceFrame refSphere = { Vector3Scale(plane.normal, plane.d),
 									   QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
-			Disk disk = { refDisk, 5 };
-			MyDrawDisk(disk, 15);
-			bool test = IntersectSegmentDisk(segment, disk, t, interPt, interNormal);
+			Sphere sphere = { refSphere, 5 };
+			MyDrawSphere(sphere, 15, 15);
+			bool test = IntersectSegmentSphere(segment, sphere, t, interPt, interNormal);
 			if (test)
 			{
-				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, BLUE);
 				DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
 			}
-			cout << "res: " << test << "\n";
+			cout << "intersection: " << test << "\n";
+
+
+			// TEST SEGMENT DISK INTERSECTION
+			//Segment segment = { ref, {-5,8,0},{5,-8,3} };
+			//MyDrawSegment(segment);
+			//Plane plane = { Vector3RotateByQuaternion({0,1,0}, QuaternionFromAxisAngle({1,0,0},time * .5f)), 2 };
+			//ReferenceFrame refDisk = { Vector3Scale(plane.normal, plane.d),
+			//						   QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
+			//Disk disk = { refDisk, 5 };
+			//MyDrawDisk(disk, 15);
+			//bool test = IntersectSegmentDisk(segment, disk, t, interPt, interNormal);
+			//if (test)
+			//{
+			//	MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+			//	DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			//}
+			//cout << "res: " << test << "\n";
 
 
 			#pragma endregion

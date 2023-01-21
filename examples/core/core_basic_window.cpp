@@ -2034,7 +2034,6 @@ bool IntersectSegmentBox(Segment seg, Box box, float& t, Vector3& interPt, Vecto
 
 
 	for (int i = 0; i < 6; i++) {
-		MyDrawQuad(faces[i]);
 		if (IntersectSegmentQuad(seg, faces[i], tempT, tempInterPt, tempInterNormal))
 		{
 			intersect = true;
@@ -2091,6 +2090,60 @@ bool IntersectSegmentInfiniteCylinder(Segment segment, Cylinder cylinder, float&
 	}
 
 	return false;
+}
+
+bool IntersectSegmentCylinder(Segment segment, Cylinder cylinder, float& t, Vector3& interPt, Vector3& interNormal)
+{
+	ReferenceFrame top_ref = cylinder.ref;
+	top_ref.Translate(Vector3RotateByQuaternion({ 0, cylinder.halfHeight,0 }, top_ref.q));
+	Disk top_disk = { top_ref, cylinder.radius };
+
+	ReferenceFrame bottom_ref = cylinder.ref;
+	bottom_ref.Translate(Vector3RotateByQuaternion({ 0, -cylinder.halfHeight,0 }, bottom_ref.q));
+	bottom_ref.q = QuaternionMultiply(bottom_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, PI));
+	Disk bottom_disk = { bottom_ref, cylinder.radius };
+
+	Disk caps[2] = { top_disk, bottom_disk };
+
+	float tempT;
+	Vector3 tempInterPt;
+	Vector3 tempInterNormal;
+	float minDist = INFINITY;
+	float dist;
+	bool intersect = false;
+
+	for (int i = 0; i < 2; i++) {
+		if (IntersectSegmentDisk(segment, caps[i], tempT, tempInterPt, tempInterNormal))
+		{
+			intersect = true;
+			dist = Vector3Distance(segment.a, tempInterPt);
+			if (dist < minDist)
+			{
+				minDist = dist;
+				t = tempT;
+				interPt = tempInterPt;
+				interNormal = tempInterNormal;
+			}
+		}
+	}
+
+	if (IntersectSegmentInfiniteCylinder(segment, cylinder, tempT, tempInterPt, tempInterNormal)) {
+		Vector3 interPtLocal = GlobalToLocalPos(tempInterPt, cylinder.ref);
+		if (fabs(interPtLocal.y) < fabs(cylinder.halfHeight))
+		{
+			intersect = true;
+			dist = Vector3Distance(segment.a, tempInterPt);
+			if (dist < minDist)
+			{
+				minDist = dist;
+				t = tempT;
+				interPt = tempInterPt;
+				interNormal = tempInterNormal;
+			}
+		}
+	}
+
+	return intersect;
 }
 
 #pragma endregion
@@ -2420,7 +2473,7 @@ int main(int argc, char* argv[])
 
 
 			Segment segment = { {-5,8,0},{5,-8,3} };
-			bool test = IntersectSegmentInfiniteCylinder(segment, cylindre, t, interPt, interNormal);
+			bool test = IntersectSegmentCylinder(segment, cylindre, t, interPt, interNormal);
 			if (test)
 			{
 				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
@@ -2434,7 +2487,7 @@ int main(int argc, char* argv[])
 			{
 				Vector3 ray = Vector3Scale(Vector3Subtract(camera.target, camera.position), 100);
 				Segment shoot = { camera.position, Vector3Add(camera.position, ray)};
-				bool cameraTest = IntersectSegmentInfiniteCylinder(shoot, cylindre, t, interPt, interNormal);
+				bool cameraTest = IntersectSegmentCylinder(shoot, cylindre, t, interPt, interNormal);
 				if (cameraTest)
 				{
 					MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);

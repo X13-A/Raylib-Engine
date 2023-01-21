@@ -302,6 +302,7 @@ void MyUpdateOrbitalCamera(Camera* camera, float deltaTime)
 		cam.theta -= mouseVect.x / 100;
 		cam.phi -= mouseVect.y / 100;
 	}
+
 	camera->position = SphericalToCartesian(cam);
 }
 #pragma endregion
@@ -1978,7 +1979,7 @@ bool IntersectSegmentSphere(Segment seg, Sphere s, float& t, Vector3& interPt, V
 		t = t2;
 		interPt = tp2;
 	}
-
+	
 	interNormal = Vector3Normalize(Vector3Subtract(interPt, S));
 	return true;
 }
@@ -2051,6 +2052,47 @@ bool IntersectSegmentBox(Segment seg, Box box, float& t, Vector3& interPt, Vecto
 	return intersect;
 }
 
+bool IntersectSegmentInfiniteCylinder(Segment segment, Cylinder cylinder, float& t, Vector3& interPt, Vector3& interNormal)
+{
+	Vector3 aLocal = GlobalToLocalPos(segment.a, cylinder.ref);
+	Vector3 bLocal = GlobalToLocalPos(segment.b, cylinder.ref);
+
+	float p1x = aLocal.x;
+	float p2x = bLocal.x;
+
+	float p1z = aLocal.z;
+	float p2z = bLocal.z;
+
+	//Polynôme du second degré
+	float a = pow((p2x - p1x), 2) + pow((p2z - p1z), 2);
+	float b = 2 * p1x * (p2x - p1x) + 2 * p1z * (p2z - p1z);
+	float c = pow(p1x, 2) + pow(p1z, 2) - pow(cylinder.radius, 2);
+	float delta = pow(b, 2) - 4 * a * c;
+
+	if (delta > 0)
+	{
+		float t1 = (-b + sqrtf(delta)) / (2 * a);
+		float t2 = (-b - sqrtf(delta)) / (2 * a);
+
+		t = min(t1, t2);
+
+		interPt = Vector3Add(segment.a, Vector3Scale(Vector3Subtract(segment.b, segment.a), t));
+		Vector3 interPtLocal = GlobalToLocalPos(interPt, cylinder.ref);
+		interNormal = Vector3Subtract(interPtLocal, { 0, interPtLocal.y, 0 });
+		interNormal = LocalToGlobalPos(Vector3Add(interPtLocal, interNormal), cylinder.ref);
+		interNormal = Vector3Normalize(Vector3Subtract(interNormal, interPt));
+		return true;
+	}
+
+	if (delta == 0)
+	{
+		t = -b / (2 * a);
+		return true;
+	}
+
+	return false;
+}
+
 #pragma endregion
 
 
@@ -2105,12 +2147,15 @@ int main(int argc, char* argv[])
 
 		BeginMode3D(camera);
 		{
-			//3D REFERENTIAL
-			DrawGrid(20, 1); // Draw a grid
-			DrawLine3D({ 0 }, { 0,10,0 }, DARKGRAY);
-			DrawSphere({ 10,0,0 }, .2f, RED);
-			DrawSphere({ 0,10,0 }, .2f, GREEN);
-			DrawSphere({ 0,0,10 }, .2f, BLUE);
+			if (!IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+			{
+				//3D REFERENTIAL
+				DrawGrid(20, 1); // Draw a grid
+				DrawLine3D({ 0 }, { 0,10,0 }, DARKGRAY);
+				DrawSphere({ 10,0,0 }, .2f, RED);
+				DrawSphere({ 0,10,0 }, .2f, GREEN);
+				DrawSphere({ 0,0,10 }, .2f, BLUE);
+			}
 
 			ReferenceFrame ref;
 			static float angle = 0;
@@ -2337,20 +2382,20 @@ int main(int argc, char* argv[])
 
 
 			// TEST SEGMENT DISK INTERSECTION
-			Segment segment = { {-5,8,0},{5,-8,3} };
-			MyDrawSegment(segment);
-			Plane plane = { Vector3RotateByQuaternion({0,1,0}, QuaternionFromAxisAngle({1,0,0},time * .5f)), 2 };
-			ReferenceFrame refDisk = { Vector3Scale(plane.normal, plane.d),
-									   QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
-			Disk disk = { refDisk, 5 };
-			MyDrawDisk(disk, 15);
-			bool test = IntersectSegmentDisk(segment, disk, t, interPt, interNormal);
-			if (test)
-			{
-				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
-				DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
-			}
-			cout << "res: " << test << "\n";
+			//Segment segment = { {-5,8,0},{5,-8,3} };
+			//MyDrawSegment(segment);
+			//Plane plane = { Vector3RotateByQuaternion({0,1,0}, QuaternionFromAxisAngle({1,0,0},time * .5f)), 2 };
+			//ReferenceFrame refDisk = { Vector3Scale(plane.normal, plane.d),
+			//						   QuaternionFromVector3ToVector3({0,1,0},plane.normal) };
+			//Disk disk = { refDisk, 5 };
+			//MyDrawDisk(disk, 15);
+			//bool test = IntersectSegmentDisk(segment, disk, t, interPt, interNormal);
+			//if (test)
+			//{
+			//	MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+			//	DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			//}
+			//cout << "res: " << test << "\n";
 
 			// TEST SEGMENT BOX INTERSECTION
 			//Segment segment = { {5,-5,10}, {1,6,-5} };
@@ -2366,10 +2411,40 @@ int main(int argc, char* argv[])
 			//	MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, BLUE);
 			//	DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
 			//}
-			//cout << "res: " << test << "\n";
+			////cout << "res: " << test << "\n";
 
+			// TEST SEGMENT INFINITE CYLINDER INTERSECTION
+			ReferenceFrame refCylindre = { {0,0,1}, QuaternionFromAxisAngle({1,0,0}, time)};
+			Cylinder cylindre = { refCylindre, 4, 1 };
+			MyDrawCylinder(cylindre, 15);
+
+
+			Segment segment = { {-5,8,0},{5,-8,3} };
+			bool test = IntersectSegmentInfiniteCylinder(segment, cylindre, t, interPt, interNormal);
+			if (test)
+			{
+				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+				DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			}
+			
 			#pragma endregion
+			
+			#pragma region shootSegment
+			if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+			{
+				Vector3 ray = Vector3Scale(Vector3Subtract(camera.target, camera.position), 100);
+				Segment shoot = { camera.position, Vector3Add(camera.position, ray)};
+				bool cameraTest = IntersectSegmentInfiniteCylinder(shoot, cylindre, t, interPt, interNormal);
+				if (cameraTest)
+				{
+					MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+					DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+				}
+				MyDrawSegment(shoot);
+			}
 
+			MyDrawSegment(segment);
+			#pragma endregion
 		}
 		EndMode3D();
 

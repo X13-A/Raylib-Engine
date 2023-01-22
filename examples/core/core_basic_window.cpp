@@ -2465,11 +2465,19 @@ bool IntersectSegmentRoundedBox(Segment seg, RoundedBox rndBox, float& t, Vector
 }
 #pragma endregion
 
+#pragma region Collisions
+
+bool GetSphereNewPositionAndVelocityIfCollidingWithRoundedBox(Sphere sphere, RoundedBox rndBox, Vector3 velocity, float deltaTime, float& colT, Vector3& colSpherePos, Vector3& colNormal, Vector3& newPosition, Vector3& newVelocity)
+{
+	RoundedBox minkowski = { rndBox.ref, rndBox.radius + sphere.radius };
+	return false;
+}
+
+
+#pragma endregion
 
 int main(int argc, char* argv[])
 {
-	// ICI LES TEST
-
 	#pragma region Init
 
 	// Initialization
@@ -2493,6 +2501,15 @@ int main(int argc, char* argv[])
 	SetCameraMode(camera, CAMERA_CUSTOM);  // Set an orbital camera mode
 
 	//--------------------------------------------------------------------------------------
+
+	#pragma endregion
+
+	#pragma region Setup
+
+	Vector3 vel = { 0, 0, 0 };
+	Vector3 rot = { 0, 0, 0 };
+	float mass = 10;
+	float radius = 1;
 
 	#pragma endregion
 
@@ -2527,12 +2544,12 @@ int main(int argc, char* argv[])
 				DrawSphere({ 0,0,10 }, .2f, BLUE);
 			}
 
-			ReferenceFrame ref;
-			static float angle = 0;
-			angle += 0.05;
-			Vector3 axes = { 1, 1, 1 };
+			#pragma region display tests
 
-#pragma region display tests
+			//ReferenceFrame ref;
+			//static float angle = 0;
+			//angle += 0.05;
+			//Vector3 axes = { 1, 1, 1 };
 
 			////PLANE DISPLAY TEST
 			//ref = ReferenceFrame(
@@ -2620,9 +2637,9 @@ int main(int argc, char* argv[])
 			//RoundedBox roundedBox = { ref, {5,2,3}, 2 };
 			//MyDrawRoundedBox(roundedBox, 10, true, true, RED, WHITE);
 
-#pragma endregion
+			#pragma endregion
 
-#pragma region methods testing
+			#pragma region methods testing
 
 			//Vector3 initialPos = { 4,0,0 };
 			//ref = ReferenceFrame(
@@ -2652,18 +2669,18 @@ int main(int argc, char* argv[])
 			//MyDrawSegment(segment);
 			//MyDrawSegment(projSegment);
 
-#pragma endregion
+			#pragma endregion
 
-#pragma region intersections tests
+			#pragma region intersections tests
 
 			//TESTS INTERSECTIONS
-			Vector3 interPt;
-			Vector3 interNormal;
-			float t;
+			//Vector3 interPt;
+			//Vector3 interNormal;
+			//float t;
 
-			ref = ReferenceFrame(
-				{ 0,0,0 },
-				QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
+			//ref = ReferenceFrame(
+			//	{ 0,0,0 },
+			//	QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
 
 			// TEST LINE PLANE INTERSECTION
 			/*Segment segment = { {-5,8,0},{5,-8,3} };
@@ -2810,34 +2827,47 @@ int main(int argc, char* argv[])
 			
 
 			// TEST SEGMENT ROUNDED BOX INTERSECTION
-			ReferenceFrame refRndBox = { {3,4,1}, QuaternionFromAxisAngle({1,1,1}, time) };
-			RoundedBox rndBox = { refRndBox, {1,2,3}, 1};
-			MyDrawRoundedBox(rndBox, 5, true, true);
-			Segment segment = { {0,8,1},{0,-8,1} };
-			bool test = IntersectSegmentRoundedBox(segment, rndBox, t, interPt, interNormal);
-			if (test)
-			{
-				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
-				DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
-			}
-			cout << "res: " << test << "\n";
+			//ReferenceFrame refRndBox = { {3,4,1}, QuaternionFromAxisAngle({1,1,1}, time) };
+			//RoundedBox rndBox = { refRndBox, {1,2,3}, 1};
+			//MyDrawRoundedBox(rndBox, 5, true, true);
+			//Segment segment = { {0,8,1},{0,-8,1} };
+			//bool test = IntersectSegmentRoundedBox(segment, rndBox, t, interPt, interNormal);
+			//if (test)
+			//{
+			//	MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+			//	DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			//}
+			//cout << "res: " << test << "\n";
 
 			#pragma endregion
 			
 			#pragma region shootSegment
-			if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
-			{
-				Vector3 ray = Vector3Scale(Vector3Subtract(camera.target, camera.position), 100);
-				Segment shoot = { camera.position, Vector3Add(camera.position, ray)};
-				bool cameraTest = IntersectSegmentRoundedBox(shoot, rndBox, t, interPt, interNormal);
-				if (cameraTest)
-				{
-					MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
-					DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
-				}
-				MyDrawSegment(shoot);
-			}
-			MyDrawSegment(segment);
+			//if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+			//{
+			//	Vector3 ray = Vector3Scale(Vector3Subtract(camera.target, camera.position), 100);
+			//	Segment shoot = { camera.position, Vector3Add(camera.position, ray)};
+			//	bool cameraTest = IntersectSegmentRoundedBox(shoot, rndBox, t, interPt, interNormal);
+			//	if (cameraTest)
+			//	{
+			//		MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+			//		DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			//	}
+			//	MyDrawSegment(shoot);
+			//}
+			//MyDrawSegment(segment);
+
+			#pragma endregion
+			
+			#pragma region collision testing
+			
+			Sphere sphere = { { {time,4,0}, QuaternionIdentity() }, radius };
+			Box ground = { { { 0,-1,0 }, QuaternionIdentity()}, { 10, 1, 10 } };
+			RoundedBox obstacle = { { { 6, 3, 0}, QuaternionIdentity() }, {1,2,3}, radius };
+
+			MyDrawSphere(sphere, 10, 10, true, true, LIGHTGRAY);
+			MyDrawBox(ground, true, true, DARKGRAY);			
+			MyDrawRoundedBox(obstacle, 10, true, true, LIGHTGRAY);
+
 			#pragma endregion
 		}
 		EndMode3D();

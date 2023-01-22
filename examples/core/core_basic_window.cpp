@@ -2868,7 +2868,28 @@ int main(int argc, char* argv[])
 			Box ground = { { { 0,-1,0 }, QuaternionIdentity()}, { 10, 1, 10 } };
 			RoundedBox obstacle = { { { 6, 3, 0}, QuaternionIdentity() }, {1,2,3}, radius };
 
-			printf("%f\n", deltaTime);
+			float colT;
+			Vector3 colSpherePos;
+			Vector3 colNormal;
+			Vector3 newPos;
+			Vector3 newVel;
+
+			bool col = GetSphereNewPositionAndVelocityIfCollidingWithRoundedBox(
+				sphere,
+				obstacle,
+				vel,
+				deltaTime,
+				colT,
+				colSpherePos,
+				colNormal,
+				newPos,
+				newVel
+			);
+
+			if (col)
+			{
+				printf("Colliding\n");
+			}
 
 			MyDrawSphere(sphere, 10, 10, true, true, LIGHTGRAY);
 			MyDrawBox(ground, true, true, DARKGRAY);			

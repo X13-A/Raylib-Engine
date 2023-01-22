@@ -2469,6 +2469,7 @@ bool IntersectSegmentRoundedBox(Segment seg, RoundedBox rndBox, float& t, Vector
 
 bool GetSphereNewPositionAndVelocityIfCollidingWithRoundedBox(Sphere sphere, RoundedBox rndBox, Vector3 velocity, float deltaTime, float& colT, Vector3& colSpherePos, Vector3& colNormal, Vector3& newPosition, Vector3& newVelocity)
 {
+	Segment AB = { sphere.ref.origin, Vector3Add(sphere.ref.origin, velocity) };
 	RoundedBox minkowski = { rndBox.ref, rndBox.radius + sphere.radius };
 	return false;
 }
@@ -2506,7 +2507,8 @@ int main(int argc, char* argv[])
 
 	#pragma region Setup
 
-	Vector3 vel = { 0, 0, 0 };
+	Vector3 pos = { 0, 2, 0 };
+	Vector3 vel = { 1, 0, 0 };
 	Vector3 rot = { 0, 0, 0 };
 	float mass = 10;
 	float radius = 1;
@@ -2860,9 +2862,13 @@ int main(int argc, char* argv[])
 			
 			#pragma region collision testing
 			
-			Sphere sphere = { { {time,4,0}, QuaternionIdentity() }, radius };
+			pos = Vector3Add(pos, Vector3Scale(vel, deltaTime));
+
+			Sphere sphere = { {pos, QuaternionIdentity() }, radius };
 			Box ground = { { { 0,-1,0 }, QuaternionIdentity()}, { 10, 1, 10 } };
 			RoundedBox obstacle = { { { 6, 3, 0}, QuaternionIdentity() }, {1,2,3}, radius };
+
+			printf("%f\n", deltaTime);
 
 			MyDrawSphere(sphere, 10, 10, true, true, LIGHTGRAY);
 			MyDrawBox(ground, true, true, DARKGRAY);			

@@ -1403,35 +1403,35 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 
 	rlColor4ub(color.r, color.g, color.b, color.a);
 
-	roundedBox.extents.x /= 2;
-	roundedBox.extents.y /= 2;
-	roundedBox.extents.z /= 2;
-	roundedBox.radius /= 2;
+	//roundedBox.extents.x /= 2;
+	//roundedBox.extents.y /= 2;
+	//roundedBox.extents.z /= 2;
+	//roundedBox.radius /= 2;
 
 #pragma region Pavé
 
 	ReferenceFrame top_ref = ReferenceFrame(
-		{ 0,roundedBox.extents.z + roundedBox.radius,0 },
+		{ 0,roundedBox.extents.y + roundedBox.radius,0 },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
-	Quad top_quad = { top_ref,{roundedBox.extents.x,0,roundedBox.extents.y} };
+	Quad top_quad = { top_ref,{roundedBox.extents.x,0,roundedBox.extents.z} };
 	MyDrawPolygonQuad(top_quad, color);
 
 	ReferenceFrame bottom_ref = ReferenceFrame(
-		{ 0,-roundedBox.extents.z - roundedBox.radius,0 },
+		{ 0,-roundedBox.extents.y - roundedBox.radius,0 },
 		QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI));
-	Quad bottom_quad = { bottom_ref,{roundedBox.extents.x,0,roundedBox.extents.y} };
+	Quad bottom_quad = { bottom_ref,{roundedBox.extents.x,0,roundedBox.extents.z} };
 	MyDrawPolygonQuad(bottom_quad, color);
 
 	ReferenceFrame front_ref = ReferenceFrame(
-		{ 0,0,roundedBox.extents.y + roundedBox.radius },
+		{ 0,0,roundedBox.extents.z + roundedBox.radius },
 		QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2));
-	Quad front_quad = { front_ref,{roundedBox.extents.x,0,roundedBox.extents.z} };
+	Quad front_quad = { front_ref,{roundedBox.extents.x,0,roundedBox.extents.y} };
 	MyDrawPolygonQuad(front_quad, color);
 
 	ReferenceFrame back_ref = ReferenceFrame(
-		{ 0,0,-roundedBox.extents.y - roundedBox.radius },
+		{ 0,0,-roundedBox.extents.z - roundedBox.radius },
 		QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), -PI / 2));
-	Quad back_quad = { back_ref,{roundedBox.extents.x,0,roundedBox.extents.z} };
+	Quad back_quad = { back_ref,{roundedBox.extents.x,0,roundedBox.extents.y} };
 	MyDrawPolygonQuad(back_quad, color);
 
 	ReferenceFrame left_ref = ReferenceFrame(
@@ -1439,7 +1439,7 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), PI / 2)));
-	Quad left_quad = { left_ref,{roundedBox.extents.y,0,roundedBox.extents.z} };
+	Quad left_quad = { left_ref,{roundedBox.extents.z,0,roundedBox.extents.y} };
 	MyDrawPolygonQuad(left_quad, color);
 
 	ReferenceFrame right_ref = ReferenceFrame(
@@ -1447,7 +1447,7 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), -PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), -PI / 2)));
-	Quad right_quad = { right_ref,{roundedBox.extents.y,0,roundedBox.extents.z} };
+	Quad right_quad = { right_ref,{roundedBox.extents.z,0,roundedBox.extents.y} };
 	MyDrawPolygonQuad(right_quad, color);
 
 #pragma endregion
@@ -1455,27 +1455,27 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 #pragma region Quart de cylindre vertical
 
 	ReferenceFrame first_vertical_ref(
-		{ roundedBox.extents.x,0,roundedBox.extents.y },
+		{ roundedBox.extents.x,0,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
-	CylinderQuarter firstVerticalCylinderQuarter = { first_vertical_ref, roundedBox.extents.z, roundedBox.radius };
+	CylinderQuarter firstVerticalCylinderQuarter = { first_vertical_ref, roundedBox.extents.y, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(firstVerticalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame second_vertical_ref(
-		{ -roundedBox.extents.x,0,roundedBox.extents.y },
+		{ -roundedBox.extents.x,0,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), 3 * PI / 2));
-	CylinderQuarter secondVerticalCylinderQuarter = { second_vertical_ref, roundedBox.extents.z, roundedBox.radius };
+	CylinderQuarter secondVerticalCylinderQuarter = { second_vertical_ref, roundedBox.extents.y, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(secondVerticalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame third_vertical_ref(
-		{ -roundedBox.extents.x,0,-roundedBox.extents.y },
+		{ -roundedBox.extents.x,0,-roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI));
-	CylinderQuarter thirdVerticalCylinderQuarter = { third_vertical_ref, roundedBox.extents.z, roundedBox.radius };
+	CylinderQuarter thirdVerticalCylinderQuarter = { third_vertical_ref, roundedBox.extents.y, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(thirdVerticalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame fourth_vertical_ref(
-		{ roundedBox.extents.x,0,-roundedBox.extents.y },
+		{ roundedBox.extents.x,0,-roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI / 2));
-	CylinderQuarter fourthVerticalCylinderQuarter = { fourth_vertical_ref, roundedBox.extents.z, roundedBox.radius };
+	CylinderQuarter fourthVerticalCylinderQuarter = { fourth_vertical_ref, roundedBox.extents.y, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(fourthVerticalCylinderQuarter, nSectors, false, color);
 
 #pragma endregion
@@ -1483,13 +1483,13 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 #pragma region Quart de cylindre horizontal face supérieure
 
 	ReferenceFrame first_superior_horizontal_ref(
-		{ 0,roundedBox.extents.z,roundedBox.extents.y },
+		{ 0,roundedBox.extents.y,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), PI / 2));
 	CylinderQuarter firstSuperiorHorizontalCylinderQuarter = { first_superior_horizontal_ref, roundedBox.extents.x, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(firstSuperiorHorizontalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame second_superior_horizontal_ref(
-		{ 0,roundedBox.extents.z,-roundedBox.extents.y },
+		{ 0,roundedBox.extents.y,-roundedBox.extents.z },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI / 2)));
@@ -1497,17 +1497,17 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 	MyDrawPolygonCylinderQuarter(secondSuperiorHorizontalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame third_superior_horizontal_ref(
-		{ roundedBox.extents.x,roundedBox.extents.z,0 },
+		{ roundedBox.extents.x,roundedBox.extents.y,0 },
 		QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), -PI / 2));
-	CylinderQuarter thirdSuperiorHorizontalCylinderQuarter = { third_superior_horizontal_ref, roundedBox.extents.y, roundedBox.radius };
+	CylinderQuarter thirdSuperiorHorizontalCylinderQuarter = { third_superior_horizontal_ref, roundedBox.extents.z, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(thirdSuperiorHorizontalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame fourth_superior_horizontal_ref(
-		{ -roundedBox.extents.x,roundedBox.extents.z,0 },
+		{ -roundedBox.extents.x,roundedBox.extents.y,0 },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), -PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), -PI / 2)));
-	CylinderQuarter fourthSuperiorHorizontalCylinderQuarter = { fourth_superior_horizontal_ref, roundedBox.extents.y, roundedBox.radius };
+	CylinderQuarter fourthSuperiorHorizontalCylinderQuarter = { fourth_superior_horizontal_ref, roundedBox.extents.z, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(fourthSuperiorHorizontalCylinderQuarter, nSectors, false, color);
 
 #pragma endregion
@@ -1515,13 +1515,13 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 #pragma region Quart de cylindre horizontal face inférieur
 
 	ReferenceFrame first_inferior_horizontal_ref(
-		{ 0,-roundedBox.extents.z,roundedBox.extents.y },
+		{ 0,-roundedBox.extents.y,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), -PI / 2));
 	CylinderQuarter firstInferiorHorizontalCylinderQuarter = { first_inferior_horizontal_ref, roundedBox.extents.x, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(firstInferiorHorizontalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame second_inferior_horizontal_ref(
-		{ 0,-roundedBox.extents.z,-roundedBox.extents.y },
+		{ 0,-roundedBox.extents.y,-roundedBox.extents.z },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), -PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI / 2)));
@@ -1529,17 +1529,17 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 	MyDrawPolygonCylinderQuarter(secondInferiorHorizontalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame third_inferior_horizontal_ref(
-		{ roundedBox.extents.x,-roundedBox.extents.z,0 },
+		{ roundedBox.extents.x,-roundedBox.extents.y,0 },
 		QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2));
-	CylinderQuarter thirdInferiorHorizontalCylinderQuarter = { third_inferior_horizontal_ref, roundedBox.extents.y, roundedBox.radius };
+	CylinderQuarter thirdInferiorHorizontalCylinderQuarter = { third_inferior_horizontal_ref, roundedBox.extents.z, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(thirdInferiorHorizontalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame fourth_inferior_horizontal_ref(
-		{ -roundedBox.extents.x,-roundedBox.extents.z,0 },
+		{ -roundedBox.extents.x,-roundedBox.extents.y,0 },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), -PI / 2)));
-	CylinderQuarter fourthInferiorHorizontalCylinderQuarter = { fourth_inferior_horizontal_ref, roundedBox.extents.y, roundedBox.radius };
+	CylinderQuarter fourthInferiorHorizontalCylinderQuarter = { fourth_inferior_horizontal_ref, roundedBox.extents.z, roundedBox.radius };
 	MyDrawPolygonCylinderQuarter(fourthInferiorHorizontalCylinderQuarter, nSectors, false, color);
 
 #pragma endregion
@@ -1547,25 +1547,25 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 #pragma region Coin face supérieur
 
 	ReferenceFrame first_superior_corner_ref(
-		{ roundedBox.extents.x,roundedBox.extents.z,roundedBox.extents.y },
+		{ roundedBox.extents.x,roundedBox.extents.y,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
 	SphereCorner firstSuperiorCorner = { first_superior_corner_ref, roundedBox.radius };
 	MyDrawPolygonSphereCorner(firstSuperiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame second_superior_corner_ref(
-		{ roundedBox.extents.x,roundedBox.extents.z,-roundedBox.extents.y },
+		{ roundedBox.extents.x,roundedBox.extents.y,-roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI / 2));
 	SphereCorner secondSuperiorCorner = { second_superior_corner_ref, roundedBox.radius };
 	MyDrawPolygonSphereCorner(secondSuperiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame third_superior_corner_ref(
-		{ -roundedBox.extents.x,roundedBox.extents.z,roundedBox.extents.y },
+		{ -roundedBox.extents.x,roundedBox.extents.y,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), -PI / 2));
 	SphereCorner thirdSuperiorCorner = { third_superior_corner_ref, roundedBox.radius };
 	MyDrawPolygonSphereCorner(thirdSuperiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame fourth_superior_corner_ref(
-		{ -roundedBox.extents.x,roundedBox.extents.z,-roundedBox.extents.y },
+		{ -roundedBox.extents.x,roundedBox.extents.y,-roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI));
 	SphereCorner fourthSuperiorCorner = { fourth_superior_corner_ref, roundedBox.radius };
 	MyDrawPolygonSphereCorner(fourthSuperiorCorner, nSectors, nSectors, color);
@@ -1575,13 +1575,13 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 #pragma region Coin face inférieur
 
 	ReferenceFrame first_inferior_corner_ref(
-		{ roundedBox.extents.x,-roundedBox.extents.z,roundedBox.extents.y },
+		{ roundedBox.extents.x,-roundedBox.extents.y,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2));
 	SphereCorner firstInferiorCorner = { first_inferior_corner_ref, roundedBox.radius };
 	MyDrawPolygonSphereCorner(firstInferiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame second_inferior_corner_ref(
-		{ roundedBox.extents.x,-roundedBox.extents.z,-roundedBox.extents.y },
+		{ roundedBox.extents.x,-roundedBox.extents.y,-roundedBox.extents.z },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2)));
@@ -1589,7 +1589,7 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 	MyDrawPolygonSphereCorner(secondInferiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame third_inferior_corner_ref(
-		{ -roundedBox.extents.x,-roundedBox.extents.z,roundedBox.extents.y },
+		{ -roundedBox.extents.x,-roundedBox.extents.y,roundedBox.extents.z },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI)));
@@ -1597,7 +1597,7 @@ void MyDrawPolygonRoundedBox(RoundedBox roundedBox, int nSectors, Color color = 
 	MyDrawPolygonSphereCorner(thirdInferiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame fourth_inferior_corner_ref(
-		{ -roundedBox.extents.x,-roundedBox.extents.z,-roundedBox.extents.y },
+		{ -roundedBox.extents.x,-roundedBox.extents.y,-roundedBox.extents.z },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI),
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2)));
@@ -1628,35 +1628,35 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 
 	rlColor4ub(color.r, color.g, color.b, color.a);
 
-	roundedBox.extents.x /= 2;
-	roundedBox.extents.y /= 2;
-	roundedBox.extents.z /= 2;
-	roundedBox.radius /= 2;
+	//roundedBox.extents.x /= 2;
+	//roundedBox.extents.y /= 2;
+	//roundedBox.extents.z /= 2;
+	//roundedBox.radius /= 2;
 
 #pragma region Pavé
 
 	ReferenceFrame top_ref = ReferenceFrame(
-		{ 0,roundedBox.extents.z + roundedBox.radius,0 },
+		{ 0,roundedBox.extents.y + roundedBox.radius,0 },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
-	Quad top_quad = { top_ref,{roundedBox.extents.x,0,roundedBox.extents.y} };
+	Quad top_quad = { top_ref,{roundedBox.extents.x,0,roundedBox.extents.z} };
 	MyDrawWireframeQuad(top_quad, color);
 
 	ReferenceFrame bottom_ref = ReferenceFrame(
-		{ 0,-roundedBox.extents.z - roundedBox.radius,0 },
+		{ 0,-roundedBox.extents.y - roundedBox.radius,0 },
 		QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI));
-	Quad bottom_quad = { bottom_ref,{roundedBox.extents.x,0,roundedBox.extents.y} };
+	Quad bottom_quad = { bottom_ref,{roundedBox.extents.x,0,roundedBox.extents.z} };
 	MyDrawWireframeQuad(bottom_quad, color);
 
 	ReferenceFrame front_ref = ReferenceFrame(
-		{ 0,0,roundedBox.extents.y + roundedBox.radius },
+		{ 0,0,roundedBox.extents.z + roundedBox.radius },
 		QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2));
-	Quad front_quad = { front_ref,{roundedBox.extents.x,0,roundedBox.extents.z} };
+	Quad front_quad = { front_ref,{roundedBox.extents.x,0,roundedBox.extents.y} };
 	MyDrawWireframeQuad(front_quad, color);
 
 	ReferenceFrame back_ref = ReferenceFrame(
-		{ 0,0,-roundedBox.extents.y - roundedBox.radius },
+		{ 0,0,-roundedBox.extents.z - roundedBox.radius },
 		QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), -PI / 2));
-	Quad back_quad = { back_ref,{roundedBox.extents.x,0,roundedBox.extents.z} };
+	Quad back_quad = { back_ref,{roundedBox.extents.x,0,roundedBox.extents.y} };
 	MyDrawWireframeQuad(back_quad, color);
 
 	ReferenceFrame left_ref = ReferenceFrame(
@@ -1664,7 +1664,7 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), PI / 2)));
-	Quad left_quad = { left_ref,{roundedBox.extents.y,0,roundedBox.extents.z} };
+	Quad left_quad = { left_ref,{roundedBox.extents.z,0,roundedBox.extents.y} };
 	MyDrawWireframeQuad(left_quad, color);
 
 	ReferenceFrame right_ref = ReferenceFrame(
@@ -1672,7 +1672,7 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), -PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), -PI / 2)));
-	Quad right_quad = { right_ref,{roundedBox.extents.y,0,roundedBox.extents.z} };
+	Quad right_quad = { right_ref,{roundedBox.extents.z,0,roundedBox.extents.y} };
 	MyDrawWireframeQuad(right_quad, color);
 
 #pragma endregion
@@ -1680,27 +1680,27 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 #pragma region Quart de cylindre vertical
 
 	ReferenceFrame first_vertical_ref(
-		{ roundedBox.extents.x,0,roundedBox.extents.y },
+		{ roundedBox.extents.x,0,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
-	CylinderQuarter firstVerticalCylinderQuarter = { first_vertical_ref, roundedBox.extents.z, roundedBox.radius };
+	CylinderQuarter firstVerticalCylinderQuarter = { first_vertical_ref, roundedBox.extents.y, roundedBox.radius };
 	MyDrawWireframeCylinderQuarter(firstVerticalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame second_vertical_ref(
-		{ -roundedBox.extents.x,0,roundedBox.extents.y },
+		{ -roundedBox.extents.x,0,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), 3 * PI / 2));
-	CylinderQuarter secondVerticalCylinderQuarter = { second_vertical_ref, roundedBox.extents.z, roundedBox.radius };
+	CylinderQuarter secondVerticalCylinderQuarter = { second_vertical_ref, roundedBox.extents.y, roundedBox.radius };
 	MyDrawWireframeCylinderQuarter(secondVerticalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame third_vertical_ref(
-		{ -roundedBox.extents.x,0,-roundedBox.extents.y },
+		{ -roundedBox.extents.x,0,-roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI));
-	CylinderQuarter thirdVerticalCylinderQuarter = { third_vertical_ref, roundedBox.extents.z, roundedBox.radius };
+	CylinderQuarter thirdVerticalCylinderQuarter = { third_vertical_ref, roundedBox.extents.y, roundedBox.radius };
 	MyDrawWireframeCylinderQuarter(thirdVerticalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame fourth_vertical_ref(
-		{ roundedBox.extents.x,0,-roundedBox.extents.y },
+		{ roundedBox.extents.x,0,-roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI / 2));
-	CylinderQuarter fourthVerticalCylinderQuarter = { fourth_vertical_ref, roundedBox.extents.z, roundedBox.radius };
+	CylinderQuarter fourthVerticalCylinderQuarter = { fourth_vertical_ref, roundedBox.extents.y, roundedBox.radius };
 	MyDrawWireframeCylinderQuarter(fourthVerticalCylinderQuarter, nSectors, false, color);
 
 #pragma endregion
@@ -1708,13 +1708,13 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 #pragma region Quart de cylindre horizontal face supérieure
 
 	ReferenceFrame first_superior_horizontal_ref(
-		{ 0,roundedBox.extents.z,roundedBox.extents.y },
+		{ 0,roundedBox.extents.y,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), PI / 2));
 	CylinderQuarter firstSuperiorHorizontalCylinderQuarter = { first_superior_horizontal_ref, roundedBox.extents.x, roundedBox.radius };
 	MyDrawWireframeCylinderQuarter(firstSuperiorHorizontalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame second_superior_horizontal_ref(
-		{ 0,roundedBox.extents.z,-roundedBox.extents.y },
+		{ 0,roundedBox.extents.y,-roundedBox.extents.z },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI / 2)));
@@ -1722,17 +1722,17 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 	MyDrawWireframeCylinderQuarter(secondSuperiorHorizontalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame third_superior_horizontal_ref(
-		{ roundedBox.extents.x,roundedBox.extents.z,0 },
+		{ roundedBox.extents.x,roundedBox.extents.y,0 },
 		QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), -PI / 2));
-	CylinderQuarter thirdSuperiorHorizontalCylinderQuarter = { third_superior_horizontal_ref, roundedBox.extents.y, roundedBox.radius };
+	CylinderQuarter thirdSuperiorHorizontalCylinderQuarter = { third_superior_horizontal_ref, roundedBox.extents.z, roundedBox.radius };
 	MyDrawWireframeCylinderQuarter(thirdSuperiorHorizontalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame fourth_superior_horizontal_ref(
-		{ -roundedBox.extents.x,roundedBox.extents.z,0 },
+		{ -roundedBox.extents.x,roundedBox.extents.y,0 },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), -PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), -PI / 2)));
-	CylinderQuarter fourthSuperiorHorizontalCylinderQuarter = { fourth_superior_horizontal_ref, roundedBox.extents.y, roundedBox.radius };
+	CylinderQuarter fourthSuperiorHorizontalCylinderQuarter = { fourth_superior_horizontal_ref, roundedBox.extents.z, roundedBox.radius };
 	MyDrawWireframeCylinderQuarter(fourthSuperiorHorizontalCylinderQuarter, nSectors, false, color);
 
 #pragma endregion
@@ -1740,13 +1740,13 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 #pragma region Quart de cylindre horizontal face inférieur
 
 	ReferenceFrame first_inferior_horizontal_ref(
-		{ 0,-roundedBox.extents.z,roundedBox.extents.y },
+		{ 0,-roundedBox.extents.y,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), -PI / 2));
 	CylinderQuarter firstInferiorHorizontalCylinderQuarter = { first_inferior_horizontal_ref, roundedBox.extents.x, roundedBox.radius };
 	MyDrawWireframeCylinderQuarter(firstInferiorHorizontalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame second_inferior_horizontal_ref(
-		{ 0,-roundedBox.extents.z,-roundedBox.extents.y },
+		{ 0,-roundedBox.extents.y,-roundedBox.extents.z },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,0,1 }), -PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI / 2)));
@@ -1754,17 +1754,17 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 	MyDrawWireframeCylinderQuarter(secondInferiorHorizontalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame third_inferior_horizontal_ref(
-		{ roundedBox.extents.x,-roundedBox.extents.z,0 },
+		{ roundedBox.extents.x,-roundedBox.extents.y,0 },
 		QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2));
-	CylinderQuarter thirdInferiorHorizontalCylinderQuarter = { third_inferior_horizontal_ref, roundedBox.extents.y, roundedBox.radius };
+	CylinderQuarter thirdInferiorHorizontalCylinderQuarter = { third_inferior_horizontal_ref, roundedBox.extents.z, roundedBox.radius };
 	MyDrawWireframeCylinderQuarter(thirdInferiorHorizontalCylinderQuarter, nSectors, false, color);
 
 	ReferenceFrame fourth_inferior_horizontal_ref(
-		{ -roundedBox.extents.x,-roundedBox.extents.z,0 },
+		{ -roundedBox.extents.x,-roundedBox.extents.y,0 },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), -PI / 2)));
-	CylinderQuarter fourthInferiorHorizontalCylinderQuarter = { fourth_inferior_horizontal_ref, roundedBox.extents.y, roundedBox.radius };
+	CylinderQuarter fourthInferiorHorizontalCylinderQuarter = { fourth_inferior_horizontal_ref, roundedBox.extents.z, roundedBox.radius };
 	MyDrawWireframeCylinderQuarter(fourthInferiorHorizontalCylinderQuarter, nSectors, false, color);
 
 #pragma endregion
@@ -1772,25 +1772,25 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 #pragma region Coin face supérieur
 
 	ReferenceFrame first_superior_corner_ref(
-		{ roundedBox.extents.x,roundedBox.extents.z,roundedBox.extents.y },
+		{ roundedBox.extents.x,roundedBox.extents.y,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
 	SphereCorner firstSuperiorCorner = { first_superior_corner_ref, roundedBox.radius };
 	MyDrawWireframeSphereCorner(firstSuperiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame second_superior_corner_ref(
-		{ roundedBox.extents.x,roundedBox.extents.z,-roundedBox.extents.y },
+		{ roundedBox.extents.x,roundedBox.extents.y,-roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI / 2));
 	SphereCorner secondSuperiorCorner = { second_superior_corner_ref, roundedBox.radius };
 	MyDrawWireframeSphereCorner(secondSuperiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame third_superior_corner_ref(
-		{ -roundedBox.extents.x,roundedBox.extents.z,roundedBox.extents.y },
+		{ -roundedBox.extents.x,roundedBox.extents.y,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), -PI / 2));
 	SphereCorner thirdSuperiorCorner = { third_superior_corner_ref, roundedBox.radius };
 	MyDrawWireframeSphereCorner(thirdSuperiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame fourth_superior_corner_ref(
-		{ -roundedBox.extents.x,roundedBox.extents.z,-roundedBox.extents.y },
+		{ -roundedBox.extents.x,roundedBox.extents.y,-roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI));
 	SphereCorner fourthSuperiorCorner = { fourth_superior_corner_ref, roundedBox.radius };
 	MyDrawWireframeSphereCorner(fourthSuperiorCorner, nSectors, nSectors, color);
@@ -1800,13 +1800,13 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 #pragma region Coin face inférieur
 
 	ReferenceFrame first_inferior_corner_ref(
-		{ roundedBox.extents.x,-roundedBox.extents.z,roundedBox.extents.y },
+		{ roundedBox.extents.x,-roundedBox.extents.y,roundedBox.extents.z },
 		QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2));
 	SphereCorner firstInferiorCorner = { first_inferior_corner_ref, roundedBox.radius };
 	MyDrawWireframeSphereCorner(firstInferiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame second_inferior_corner_ref(
-		{ roundedBox.extents.x,-roundedBox.extents.z,-roundedBox.extents.y },
+		{ roundedBox.extents.x,-roundedBox.extents.y,-roundedBox.extents.z },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI / 2),
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2)));
@@ -1814,7 +1814,7 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 	MyDrawWireframeSphereCorner(secondInferiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame third_inferior_corner_ref(
-		{ -roundedBox.extents.x,-roundedBox.extents.z,roundedBox.extents.y },
+		{ -roundedBox.extents.x,-roundedBox.extents.y,roundedBox.extents.z },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI),
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI)));
@@ -1822,7 +1822,7 @@ void MyDrawWireframeRoundedBox(RoundedBox roundedBox, int nSectors, Color color 
 	MyDrawWireframeSphereCorner(thirdInferiorCorner, nSectors, nSectors, color);
 
 	ReferenceFrame fourth_inferior_corner_ref(
-		{ -roundedBox.extents.x,-roundedBox.extents.z,-roundedBox.extents.y },
+		{ -roundedBox.extents.x,-roundedBox.extents.y,-roundedBox.extents.z },
 		QuaternionMultiply(
 			QuaternionFromAxisAngle(Vector3Normalize({ 0,1,0 }), PI),
 			QuaternionFromAxisAngle(Vector3Normalize({ 1,0,0 }), PI / 2)));
@@ -2047,7 +2047,7 @@ bool IntersectSegmentBox(Segment seg, Box box, float& t, Vector3& interPt, Vecto
 			}
 		}
 	}
-	//return IsPointInsideBox(box, interPt);
+
 	return intersect;
 }
 
@@ -2150,14 +2150,14 @@ bool IntersectSegmentCapsule(Segment segment, Capsule capsule, float& t, Vector3
 {
 	ReferenceFrame top_ref = capsule.ref;
 	top_ref.Translate(Vector3RotateByQuaternion({ 0, capsule.halfHeight,0 }, top_ref.q));
-	Sphere top_disk = { top_ref, capsule.radius };
+	Sphere top_sphere = { top_ref, capsule.radius };
 
 	ReferenceFrame bottom_ref = capsule.ref;
 	bottom_ref.Translate(Vector3RotateByQuaternion({ 0, -capsule.halfHeight,0 }, bottom_ref.q));
 	bottom_ref.q = QuaternionMultiply(bottom_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, PI));
-	Sphere bottom_disk = { bottom_ref, capsule.radius };
+	Sphere bottom_sphere = { bottom_ref, capsule.radius };
 
-	Sphere caps[2] = { top_disk, bottom_disk };
+	Sphere spheres[2] = { top_sphere, bottom_sphere };
 
 	float tempT;
 	Vector3 tempInterPt;
@@ -2167,7 +2167,7 @@ bool IntersectSegmentCapsule(Segment segment, Capsule capsule, float& t, Vector3
 	bool intersect = false;
 
 	for (int i = 0; i < 2; i++) {
-		if (IntersectSegmentSphere(segment, caps[i], tempT, tempInterPt, tempInterNormal))
+		if (IntersectSegmentSphere(segment, spheres[i], tempT, tempInterPt, tempInterNormal))
 		{
 			intersect = true;
 			dist = Vector3Distance(segment.a, tempInterPt);
@@ -2184,12 +2184,272 @@ bool IntersectSegmentCapsule(Segment segment, Capsule capsule, float& t, Vector3
 	ReferenceFrame cylinder_ref = capsule.ref;
 	Cylinder cylinder = { capsule.ref, capsule.halfHeight, capsule.radius };
 
-	if (IntersectSegmentInfiniteCylinder(segment, cylinder, tempT, tempInterPt, tempInterNormal)) {
-		Vector3 interPtLocal = GlobalToLocalPos(tempInterPt, cylinder.ref);
-		if (fabs(interPtLocal.y) < fabs(cylinder.halfHeight))
+	if (IntersectSegmentCylinder(segment, cylinder, tempT, tempInterPt, tempInterNormal)) {
+		intersect = true;
+		dist = Vector3Distance(segment.a, tempInterPt);
+		if (dist < minDist)
+		{
+			minDist = dist;
+			t = tempT;
+			interPt = tempInterPt;
+			interNormal = tempInterNormal;
+		}
+	}
+
+	return intersect;
+}
+
+bool IntersectSegmentRoundedBox(Segment seg, RoundedBox rndBox, float& t, Vector3& interPt, Vector3& interNormal)
+{
+	#pragma region pavé
+	// Front quad
+	ReferenceFrame front_ref = rndBox.ref;
+	front_ref.Translate(Vector3RotateByQuaternion({ 0,0,rndBox.extents.z + rndBox.radius }, front_ref.q));
+	front_ref.q = QuaternionMultiply(front_ref.q, QuaternionFromAxisAngle({ 1,0,0 }, PI / 2));
+	Quad front_quad = { front_ref, {rndBox.extents.x, 0, rndBox.extents.y} };
+
+	// Back quad
+	ReferenceFrame back_ref = rndBox.ref;
+	back_ref.Translate(Vector3RotateByQuaternion({ 0,0,-rndBox.extents.z - rndBox.radius }, back_ref.q));
+	back_ref.q = QuaternionMultiply(back_ref.q, QuaternionFromAxisAngle({ 1,0,0 }, -PI / 2));
+	Quad back_quad = { back_ref, {rndBox.extents.x, 0, rndBox.extents.y} };
+
+	// Left quad
+	ReferenceFrame left_ref = rndBox.ref;
+	left_ref.Translate(Vector3RotateByQuaternion({ -rndBox.extents.x - rndBox.radius,0,0 }, left_ref.q));
+	left_ref.q = QuaternionMultiply(left_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, PI / 2));
+	Quad left_quad = { left_ref, {rndBox.extents.y, 0, rndBox.extents.z} };
+
+	// Right quad
+	ReferenceFrame right_ref = rndBox.ref;
+	right_ref.Translate(Vector3RotateByQuaternion({ rndBox.extents.x + rndBox.radius,0,0 }, right_ref.q));
+	right_ref.q = QuaternionMultiply(right_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, -PI / 2));
+	Quad right_quad = { right_ref, {rndBox.extents.y, 0, rndBox.extents.z} };
+
+	// Top quad
+	ReferenceFrame top_ref = rndBox.ref;
+	top_ref.Translate(Vector3RotateByQuaternion({ 0,rndBox.extents.y + rndBox.radius,0 }, top_ref.q));
+	top_ref.q = QuaternionMultiply(top_ref.q, QuaternionFromAxisAngle({ 0,0,0 }, 0));
+	Quad top_quad = { top_ref, {rndBox.extents.x, 0, rndBox.extents.z} };
+
+	// Bottom quad
+	ReferenceFrame bottom_ref = rndBox.ref;
+	bottom_ref.Translate(Vector3RotateByQuaternion({ 0,-rndBox.extents.y - rndBox.radius,0 }, bottom_ref.q));
+	bottom_ref.q = QuaternionMultiply(bottom_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, PI));
+	Quad bottom_quad = { bottom_ref, {rndBox.extents.x, 0, rndBox.extents.z} };
+	#pragma endregion
+	
+	#pragma region vertical cylinders
+
+	ReferenceFrame left_front_vertical_ref = rndBox.ref;
+	left_front_vertical_ref.Translate(Vector3RotateByQuaternion({ -rndBox.extents.x ,0,rndBox.extents.z  }, left_front_vertical_ref.q));
+	left_front_vertical_ref.q = QuaternionMultiply(left_front_vertical_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, 3*PI/2));
+	Cylinder left_front_vertical_cylinder = { left_front_vertical_ref, rndBox.extents.y, rndBox.radius };
+
+	ReferenceFrame right_front_vertical_ref = rndBox.ref;
+	right_front_vertical_ref.Translate(Vector3RotateByQuaternion({ rndBox.extents.x ,0,rndBox.extents.z }, right_front_vertical_ref.q));
+	Cylinder right_front_vertical_cylinder = { right_front_vertical_ref, rndBox.extents.y, rndBox.radius };
+
+	ReferenceFrame right_back_vertical_ref = rndBox.ref;
+	right_back_vertical_ref.Translate(Vector3RotateByQuaternion({ rndBox.extents.x ,0,-rndBox.extents.z }, right_back_vertical_ref.q));
+	right_back_vertical_ref.q = QuaternionMultiply(right_back_vertical_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, PI/2));
+	Cylinder right_back_vertical_cylinder = { right_back_vertical_ref, rndBox.extents.y, rndBox.radius };
+
+	ReferenceFrame left_back_vertical_ref = rndBox.ref;
+	left_back_vertical_ref.Translate(Vector3RotateByQuaternion({ -rndBox.extents.x ,0,-rndBox.extents.z }, left_back_vertical_ref.q));
+	left_back_vertical_ref.q = QuaternionMultiply(left_back_vertical_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, PI));
+	Cylinder left_back_vertical_cylinder = { left_back_vertical_ref, rndBox.extents.y, rndBox.radius };
+
+	#pragma endregion
+
+	#pragma region corners
+	// Top
+	ReferenceFrame top_front_left_corner_ref = rndBox.ref;
+	top_front_left_corner_ref.Translate(Vector3RotateByQuaternion({ -rndBox.extents.x, rndBox.extents.y, rndBox.extents.z }, top_front_left_corner_ref.q));
+	top_front_left_corner_ref.q = QuaternionMultiply(top_front_left_corner_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, -PI/2));
+	Sphere top_front_left_sphere = { top_front_left_corner_ref, rndBox.radius };
+
+	ReferenceFrame top_front_right_corner_ref = rndBox.ref;
+	top_front_right_corner_ref.Translate(Vector3RotateByQuaternion({ rndBox.extents.x, rndBox.extents.y, rndBox.extents.z }, top_front_right_corner_ref.q));
+	Sphere top_front_right_sphere = { top_front_right_corner_ref, rndBox.radius };
+
+	ReferenceFrame top_back_left_corner_ref = rndBox.ref;
+	top_back_left_corner_ref.Translate(Vector3RotateByQuaternion({ -rndBox.extents.x, rndBox.extents.y, -rndBox.extents.z }, top_back_left_corner_ref.q));
+	top_back_left_corner_ref.q = QuaternionMultiply(top_back_left_corner_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, PI));
+	Sphere top_back_left_sphere = { top_back_left_corner_ref, rndBox.radius };
+
+	ReferenceFrame top_back_right_corner_ref = rndBox.ref;
+	top_back_right_corner_ref.Translate(Vector3RotateByQuaternion({ rndBox.extents.x, rndBox.extents.y, -rndBox.extents.z }, top_back_right_corner_ref.q));
+	top_back_right_corner_ref.q = QuaternionMultiply(top_back_right_corner_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, PI / 2));
+	top_back_right_corner_ref.q = QuaternionMultiply(top_back_right_corner_ref.q, QuaternionFromAxisAngle({ 1,0,0 }, PI));
+	Sphere top_back_right_sphere = { top_back_right_corner_ref, rndBox.radius };
+
+	// Bottom
+	ReferenceFrame bottom_front_left_corner_ref = rndBox.ref;
+	bottom_front_left_corner_ref.Translate(Vector3RotateByQuaternion({ -rndBox.extents.x, -rndBox.extents.y, rndBox.extents.z }, bottom_front_left_corner_ref.q));
+	bottom_front_left_corner_ref.q = QuaternionMultiply(bottom_front_left_corner_ref.q, QuaternionFromAxisAngle({ 1,0,0 }, PI));
+	bottom_front_left_corner_ref.q = QuaternionMultiply(bottom_front_left_corner_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, PI));
+	Sphere bottom_front_left_sphere = { bottom_front_left_corner_ref, rndBox.radius };
+
+	ReferenceFrame bottom_front_right_corner_ref = rndBox.ref;
+	bottom_front_right_corner_ref.Translate(Vector3RotateByQuaternion({ rndBox.extents.x, -rndBox.extents.y, rndBox.extents.z }, bottom_front_right_corner_ref.q));
+	bottom_front_right_corner_ref.q = QuaternionMultiply(bottom_front_right_corner_ref.q, QuaternionFromAxisAngle({ 1,0,0 }, PI));
+	bottom_front_right_corner_ref.q = QuaternionMultiply(bottom_front_right_corner_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, PI/2));
+	Sphere bottom_front_right_sphere = { bottom_front_right_corner_ref, rndBox.radius };
+
+	ReferenceFrame bottom_back_left_corner_ref = rndBox.ref;
+	bottom_back_left_corner_ref.Translate(Vector3RotateByQuaternion({ -rndBox.extents.x, -rndBox.extents.y, -rndBox.extents.z }, bottom_back_left_corner_ref.q));
+	bottom_back_left_corner_ref.q = QuaternionMultiply(bottom_back_left_corner_ref.q, QuaternionFromAxisAngle({ 1,0,0 }, PI));
+	bottom_back_left_corner_ref.q = QuaternionMultiply(bottom_back_left_corner_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, -PI/2));
+	Sphere bottom_back_left_sphere = { bottom_back_left_corner_ref, rndBox.radius };
+
+	ReferenceFrame bottom_back_right_corner_ref = rndBox.ref;
+	bottom_back_right_corner_ref.Translate(Vector3RotateByQuaternion({ rndBox.extents.x, -rndBox.extents.y, -rndBox.extents.z }, bottom_back_right_corner_ref.q));
+	bottom_back_right_corner_ref.q = QuaternionMultiply(bottom_back_right_corner_ref.q, QuaternionFromAxisAngle({ 1,0,0 }, PI));
+	bottom_back_right_corner_ref.q = QuaternionMultiply(bottom_back_right_corner_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, 0));
+	Sphere bottom_back_right_sphere = { bottom_back_right_corner_ref, rndBox.radius };
+
+	#pragma endregion
+
+	#pragma region horizontal cylinders
+
+	// Front
+	ReferenceFrame front_top_horizontal_ref = rndBox.ref;
+	front_top_horizontal_ref.Translate(Vector3RotateByQuaternion({ 0 ,rndBox.extents.y, rndBox.extents.z }, front_top_horizontal_ref.q));
+	front_top_horizontal_ref.q = QuaternionMultiply(front_top_horizontal_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, PI / 2));
+	Cylinder front_top_horizontal_cylinder = { front_top_horizontal_ref, rndBox.extents.x, rndBox.radius };
+
+	ReferenceFrame front_bottom_horizontal_ref = rndBox.ref;
+	front_bottom_horizontal_ref.Translate(Vector3RotateByQuaternion({ 0 ,-rndBox.extents.y, rndBox.extents.z }, front_bottom_horizontal_ref.q));
+	front_bottom_horizontal_ref.q = QuaternionMultiply(front_bottom_horizontal_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, PI / 2));
+	front_bottom_horizontal_ref.q = QuaternionMultiply(front_bottom_horizontal_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, -PI/2));
+	Cylinder front_bottom_horizontal_cylinder = { front_bottom_horizontal_ref, rndBox.extents.x, rndBox.radius };
+
+	// Back
+	ReferenceFrame back_top_horizontal_ref = rndBox.ref;
+	back_top_horizontal_ref.Translate(Vector3RotateByQuaternion({ 0 ,rndBox.extents.y, -rndBox.extents.z }, back_top_horizontal_ref.q));
+	back_top_horizontal_ref.q = QuaternionMultiply(back_top_horizontal_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, PI / 2));
+	back_top_horizontal_ref.q = QuaternionMultiply(back_top_horizontal_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, PI / 2));
+	Cylinder back_top_horizontal_cylinder = { back_top_horizontal_ref, rndBox.extents.x, rndBox.radius };
+
+	ReferenceFrame back_bottom_horizontal_ref = rndBox.ref;
+	back_bottom_horizontal_ref.Translate(Vector3RotateByQuaternion({ 0 ,-rndBox.extents.y, -rndBox.extents.z }, back_bottom_horizontal_ref.q));
+	back_bottom_horizontal_ref.q = QuaternionMultiply(back_bottom_horizontal_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, PI / 2));
+	back_bottom_horizontal_ref.q = QuaternionMultiply(back_bottom_horizontal_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, PI));
+	Cylinder back_bottom_horizontal_cylinder = { back_bottom_horizontal_ref, rndBox.extents.x, rndBox.radius };
+
+	// Left
+	ReferenceFrame left_top_horizontal_ref = rndBox.ref;
+	left_top_horizontal_ref.Translate(Vector3RotateByQuaternion({ -rndBox.extents.x ,rndBox.extents.y, 0 }, left_top_horizontal_ref.q));
+	left_top_horizontal_ref.q = QuaternionMultiply(left_top_horizontal_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, PI / 2));
+	left_top_horizontal_ref.q = QuaternionMultiply(left_top_horizontal_ref.q, QuaternionFromAxisAngle({ 1,0,0 }, PI / 2));
+	left_top_horizontal_ref.q = QuaternionMultiply(left_top_horizontal_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, PI / 2));
+	Cylinder left_top_horizontal_cylinder = { left_top_horizontal_ref, rndBox.extents.z, rndBox.radius };
+
+	ReferenceFrame left_bottom_horizontal_ref = rndBox.ref;
+	left_bottom_horizontal_ref.Translate(Vector3RotateByQuaternion({ -rndBox.extents.x ,-rndBox.extents.y, 0 }, left_bottom_horizontal_ref.q));
+	left_bottom_horizontal_ref.q = QuaternionMultiply(left_bottom_horizontal_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, PI / 2));
+	left_bottom_horizontal_ref.q = QuaternionMultiply(left_bottom_horizontal_ref.q, QuaternionFromAxisAngle({ 1,0,0 }, PI / 2));
+	left_bottom_horizontal_ref.q = QuaternionMultiply(left_bottom_horizontal_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, PI));
+	Cylinder left_bottom_horizontal_cylinder = { left_bottom_horizontal_ref, rndBox.extents.z, rndBox.radius };
+
+	// Right
+	ReferenceFrame right_top_horizontal_ref = rndBox.ref;
+	right_top_horizontal_ref.Translate(Vector3RotateByQuaternion({ rndBox.extents.x ,rndBox.extents.y, 0 }, right_top_horizontal_ref.q));
+	right_top_horizontal_ref.q = QuaternionMultiply(right_top_horizontal_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, PI / 2));
+	right_top_horizontal_ref.q = QuaternionMultiply(right_top_horizontal_ref.q, QuaternionFromAxisAngle({ 1,0,0 }, PI / 2));
+	right_top_horizontal_ref.q = QuaternionMultiply(right_top_horizontal_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, 0));
+	Cylinder right_top_horizontal_cylinder = { right_top_horizontal_ref, rndBox.extents.z, rndBox.radius };
+
+	ReferenceFrame right_bottom_horizontal_ref = rndBox.ref;
+	right_bottom_horizontal_ref.Translate(Vector3RotateByQuaternion({ rndBox.extents.x ,-rndBox.extents.y, 0 }, right_bottom_horizontal_ref.q));
+	right_bottom_horizontal_ref.q = QuaternionMultiply(right_bottom_horizontal_ref.q, QuaternionFromAxisAngle({ 0,0,1 }, PI / 2));
+	right_bottom_horizontal_ref.q = QuaternionMultiply(right_bottom_horizontal_ref.q, QuaternionFromAxisAngle({ 1,0,0 }, PI / 2));
+	right_bottom_horizontal_ref.q = QuaternionMultiply(right_bottom_horizontal_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, -PI/2));
+	Cylinder right_bottom_horizontal_cylinder = { right_bottom_horizontal_ref, rndBox.extents.z, rndBox.radius };
+
+	Quad faces[6] = 
+	{
+		front_quad,
+		back_quad,
+		left_quad,
+		right_quad,
+		top_quad,
+		bottom_quad
+	};
+
+	Cylinder cylinders[12] =
+	{
+		left_top_horizontal_cylinder,
+		left_bottom_horizontal_cylinder,
+		right_top_horizontal_cylinder,
+		right_bottom_horizontal_cylinder,
+		front_top_horizontal_cylinder,
+		front_bottom_horizontal_cylinder,
+		back_top_horizontal_cylinder,
+		back_bottom_horizontal_cylinder,
+
+		left_front_vertical_cylinder,
+		left_back_vertical_cylinder,
+		right_front_vertical_cylinder,
+		right_back_vertical_cylinder
+	};
+
+	Sphere spheres[8] = {
+		top_front_left_sphere,
+		top_front_right_sphere,
+		bottom_front_left_sphere,
+		bottom_front_right_sphere,
+		top_back_left_sphere,
+		top_back_right_sphere,
+		bottom_back_left_sphere,
+		bottom_back_right_sphere,
+	};
+	#pragma endregion
+
+	float tempT;
+	Vector3 tempInterPt;
+	Vector3 tempInterNormal;
+	float minDist = INFINITY;
+	float dist;
+	bool intersect = false;
+
+
+	for (int i = 0; i < 6; i++) {
+		if (IntersectSegmentQuad(seg, faces[i], tempT, tempInterPt, tempInterNormal))
 		{
 			intersect = true;
-			dist = Vector3Distance(segment.a, tempInterPt);
+			dist = Vector3Distance(seg.a, tempInterPt);
+			if (dist < minDist)
+			{
+				minDist = dist;
+				t = tempT;
+				interPt = tempInterPt;
+				interNormal = tempInterNormal;
+			}
+		}
+	}
+
+	for (int i = 0; i < 12; i++) {
+		if (IntersectSegmentCylinder(seg, cylinders[i], tempT, tempInterPt, tempInterNormal))
+		{
+			intersect = true;
+			dist = Vector3Distance(seg.a, tempInterPt);
+			if (dist < minDist)
+			{
+				minDist = dist;
+				t = tempT;
+				interPt = tempInterPt;
+				interNormal = tempInterNormal;
+			}
+		}
+	}
+
+	for (int i = 0; i < 8; i++) {
+		if (IntersectSegmentSphere(seg, spheres[i], tempT, tempInterPt, tempInterNormal))
+		{
+			intersect = true;
+			dist = Vector3Distance(seg.a, tempInterPt);
 			if (dist < minDist)
 			{
 				minDist = dist;
@@ -2201,8 +2461,8 @@ bool IntersectSegmentCapsule(Segment segment, Capsule capsule, float& t, Vector3
 	}
 
 	return intersect;
-}
 
+}
 #pragma endregion
 
 
@@ -2536,18 +2796,32 @@ int main(int argc, char* argv[])
 			}*/
 
 			// TEST SEGMENT CAPSULE INTERSECTION
-			ReferenceFrame refCapsule = { {0,0,1}, QuaternionFromAxisAngle({0,0,1}, time)};
-			Capsule capsule = { refCapsule, 4, 1 };
-			MyDrawCapsule(capsule, 15, 15);
+			//ReferenceFrame refCapsule = { {0,0,1}, QuaternionFromAxisAngle({0,0,1}, time)};
+			//Capsule capsule = { refCapsule, 4, 1 };
+			//MyDrawCapsule(capsule, 15, 15);
+			//Segment segment = { {0,8,1},{0,-8,1} };
+			//bool test = IntersectSegmentCapsule(segment, capsule, t, interPt, interNormal);
+			//if (test)
+			//{
+			//	MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+			//	DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			//}
+			//cout << "res: " << test << "\n";
+			
+
+			// TEST SEGMENT ROUNDED BOX INTERSECTION
+			ReferenceFrame refRndBox = { {3,4,1}, QuaternionFromAxisAngle({1,1,1}, time) };
+			RoundedBox rndBox = { refRndBox, {1,2,3}, 1};
+			MyDrawRoundedBox(rndBox, 5, true, true);
 			Segment segment = { {0,8,1},{0,-8,1} };
-			bool test = IntersectSegmentCapsule(segment, capsule, t, interPt, interNormal);
+			bool test = IntersectSegmentRoundedBox(segment, rndBox, t, interPt, interNormal);
 			if (test)
 			{
 				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
 				DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
 			}
 			cout << "res: " << test << "\n";
-			
+
 			#pragma endregion
 			
 			#pragma region shootSegment
@@ -2555,7 +2829,7 @@ int main(int argc, char* argv[])
 			{
 				Vector3 ray = Vector3Scale(Vector3Subtract(camera.target, camera.position), 100);
 				Segment shoot = { camera.position, Vector3Add(camera.position, ray)};
-				bool cameraTest = IntersectSegmentCapsule(shoot, capsule, t, interPt, interNormal);
+				bool cameraTest = IntersectSegmentRoundedBox(shoot, rndBox, t, interPt, interNormal);
 				if (cameraTest)
 				{
 					MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);

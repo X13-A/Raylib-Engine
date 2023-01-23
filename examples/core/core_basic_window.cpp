@@ -1899,6 +1899,7 @@ bool IntersectSegmentQuad(Segment segment, Quad quad, float& t, Vector3& interPt
 	{
 		return false;
 	}
+	if ((b.y - a.y) == 0) return false;
 	t = -a.y / (b.y - a.y);
 	
 	interPt = Vector3Add(a, Vector3Scale(Vector3Subtract(b, a), t));
@@ -2074,6 +2075,8 @@ bool IntersectSegmentInfiniteCylinder(Segment segment, Cylinder cylinder, float&
 		float t2 = (-b - sqrtf(delta)) / (2 * a);
 
 		t = min(t1, t2);
+
+		if (t > 1 || t < 0) return false;
 
 		interPt = Vector3Add(segment.a, Vector3Scale(Vector3Subtract(segment.b, segment.a), t));
 		Vector3 interPtLocal = GlobalToLocalPos(interPt, cylinder.ref);
@@ -2368,6 +2371,8 @@ bool IntersectSegmentRoundedBox(Segment seg, RoundedBox rndBox, float& t, Vector
 	right_bottom_horizontal_ref.q = QuaternionMultiply(right_bottom_horizontal_ref.q, QuaternionFromAxisAngle({ 0,1,0 }, -PI/2));
 	Cylinder right_bottom_horizontal_cylinder = { right_bottom_horizontal_ref, rndBox.extents.z, rndBox.radius };
 
+	#pragma endregion
+
 	Quad faces[6] = 
 	{
 		front_quad,
@@ -2405,7 +2410,6 @@ bool IntersectSegmentRoundedBox(Segment seg, RoundedBox rndBox, float& t, Vector
 		bottom_back_left_sphere,
 		bottom_back_right_sphere,
 	};
-	#pragma endregion
 
 	float tempT;
 	Vector3 tempInterPt;
@@ -2418,6 +2422,7 @@ bool IntersectSegmentRoundedBox(Segment seg, RoundedBox rndBox, float& t, Vector
 	for (int i = 0; i < 6; i++) {
 		if (IntersectSegmentQuad(seg, faces[i], tempT, tempInterPt, tempInterNormal))
 		{
+			printf("%d\n", i);
 			intersect = true;
 			dist = Vector3Distance(seg.a, tempInterPt);
 			if (dist < minDist)
@@ -2467,15 +2472,110 @@ bool IntersectSegmentRoundedBox(Segment seg, RoundedBox rndBox, float& t, Vector
 
 #pragma region Collisions
 
+char GetCollisionFace(Vector3 interPt, Box box)
+{
+	Vector3 localInterPt = GlobalToLocalPos(interPt, box.ref);
+
+	float coefX = fabs(localInterPt.x) / fabs(box.extents.x);
+	float coefY = fabs(localInterPt.y) / fabs(box.extents.y);
+	float coefZ = fabs(localInterPt.z) / fabs(box.extents.z);
+
+	if (coefX >= coefY && coefX >= coefZ) return 'X';
+	if (coefY >= coefX && coefY >= coefZ) return 'Y';
+	if (coefZ >= coefX && coefZ >= coefY) return 'Z';
+
+	return 0;
+}
+
+bool GettingCloseToDest(Vector3 pos, Vector3 acc, float deltaTime, Vector3 dest)
+{
+	float actualNorm = Vector3Distance(pos, dest);
+	float nextNorm = Vector3Distance(Vector3Add(pos, Vector3Scale(acc, deltaTime)), dest);
+
+	if (nextNorm < actualNorm) return true;
+	return false;
+}
+
 bool GetSphereNewPositionAndVelocityIfCollidingWithRoundedBox(Sphere sphere, RoundedBox rndBox, Vector3 velocity, float deltaTime, float& colT, Vector3& colSpherePos, Vector3& colNormal, Vector3& newPosition, Vector3& newVelocity)
 {
-	Segment AB = { sphere.ref.origin, Vector3Add(sphere.ref.origin, velocity) };
-	RoundedBox minkowski = { rndBox.ref, rndBox.radius + sphere.radius };
-	return false;
+	if (!GettingCloseToDest(sphere.ref.origin, velocity, deltaTime, rndBox.ref.origin)) return false;
+
+	Vector3 A = sphere.ref.origin;
+	Vector3 B = Vector3Add(sphere.ref.origin, Vector3Scale(velocity, deltaTime));
+	Segment AB = { A, B };
+
+	RoundedBox minkowski = { rndBox.ref, {rndBox.extents.x + rndBox.radius, rndBox.extents.y + rndBox.radius, rndBox.extents.z + rndBox.radius}, sphere.radius};
+	Box OBB = { minkowski.ref, {minkowski.extents.x + minkowski.radius, minkowski.extents.y + minkowski.radius, minkowski.extents.z + minkowski.radius} };
+
+	MyDrawWireframeBox(OBB, BLUE);
+	MyDrawWireframeRoundedBox(minkowski, 10, RED);
+
+	Vector3 colPt;
+	MyDrawSegment(AB);
+	if (IntersectSegmentBox(AB, OBB, colT, colPt, colNormal))
+	{
+		Vector3 localColPt = GlobalToLocalPos(colPt, OBB.ref);
+
+		// Vérifier si c'est sur une face
+
+		bool inX, inY, inZ;
+
+		char collisionFace = GetCollisionFace(colPt, OBB);
+		printf("%c\n", collisionFace);
+
+		if (collisionFace == 'X')
+		{
+			inX = fabs(localColPt.x) <= fabs(rndBox.extents.x + rndBox.radius + sphere.radius);
+			inY = fabs(localColPt.y) <= fabs(rndBox.extents.y + rndBox.radius);
+			inZ = fabs(localColPt.z) <= fabs(rndBox.extents.z + rndBox.radius);
+		}
+		else if (collisionFace == 'Y')
+		{
+			inX = fabs(localColPt.x) <= fabs(rndBox.extents.x + rndBox.radius);
+			inY = fabs(localColPt.y) <= fabs(rndBox.extents.y + rndBox.radius + sphere.radius);
+			inZ = fabs(localColPt.z) <= fabs(rndBox.extents.z + rndBox.radius);
+		}
+		else if (collisionFace == 'Z')
+		{
+			inX = fabs(localColPt.x) <= fabs(rndBox.extents.x + rndBox.radius);
+			inY = fabs(localColPt.y) <= fabs(rndBox.extents.y + rndBox.radius);
+			inZ = fabs(localColPt.z) <= fabs(rndBox.extents.z + rndBox.radius + sphere.radius);
+		}
+
+		printf("Bool: %d, %d, %d\n", inX, inY, inZ);
+		printf("Extents: %f, %f, %f\n", rndBox.extents.x + rndBox.radius, rndBox.extents.y + rndBox.radius, rndBox.extents.z + rndBox.radius);
+		printf("Collision: %f, %f, %f\n", localColPt.x, localColPt.y, localColPt.z);
+
+		if (!(inX && inY && inZ)) return false;
+		newVelocity = Vector3Reflect(velocity, colNormal);
+		printf("New vel: %f, %f, %f\n", newVelocity.x, newVelocity.y, newVelocity.z);
+		return true;
+	}
+	else if (IsPointInsideBox(OBB, B))
+	{
+		// Tester quelques capsules judicieusement choisies
+		if (IntersectSegmentRoundedBox(AB, minkowski, colT, colPt, colNormal))
+		{
+			printf("Capsule\n");
+			newVelocity = Vector3Reflect(velocity, colNormal);
+			MyDrawSegment({ A, colPt });
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 }
 
 
 #pragma endregion
+
+Vector3 GetAcc(Vector3 vel)
+{
+	Vector3 G = { 0, -0, 0 };
+	return Vector3Add(G, vel);
+}
 
 int main(int argc, char* argv[])
 {
@@ -2507,16 +2607,16 @@ int main(int argc, char* argv[])
 
 	#pragma region Setup
 
-	Vector3 pos = { 0, 2, 0 };
-	Vector3 vel = { 1, 0, 0 };
+	Vector3 pos = { -6, 4, 0 };
+	Vector3 vel = { 2, 0, 0 };
 	Vector3 rot = { 0, 0, 0 };
 	float mass = 10;
 	float radius = 1;
 
 	#pragma endregion
 
-	// Main game loop
-	while (!WindowShouldClose())    // Detect window close button or ESC key
+	// Main game loopx
+	while (!WindowShouldClose()) // Detect window close button or ESC key
 	{
 		// Update
 		//----------------------------------------------------------------------------------
@@ -2676,9 +2776,9 @@ int main(int argc, char* argv[])
 			#pragma region intersections tests
 
 			//TESTS INTERSECTIONS
-			//Vector3 interPt;
-			//Vector3 interNormal;
-			//float t;
+			Vector3 interPt;
+			Vector3 interNormal;
+			float t;
 
 			//ref = ReferenceFrame(
 			//	{ 0,0,0 },
@@ -2803,16 +2903,17 @@ int main(int argc, char* argv[])
 			cout << "res: " << test << "\n";*/
 
 			// TEST SEGMENT CYLINDER INTERSECTION
-			/*ReferenceFrame refCylindre = { {0,0,1}, QuaternionFromAxisAngle({1,0,0}, time)};
-			Cylinder cylindre = { refCylindre, 4, 1 };
-			MyDrawCylinder(cylindre, 15);
-			Segment segment = { {-5,8,0},{5,-8,3} };
-			bool test = IntersectSegmentCylinder(segment, cylindre, t, interPt, interNormal);
-			if (test)
-			{
-				MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
-				DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
-			}*/
+			//ReferenceFrame refCylindre = { {0,0,1}, QuaternionFromAxisAngle({1,0,0}, time)};
+			//Cylinder cylindre = { refCylindre, 4, 1 };
+			//MyDrawCylinder(cylindre, 15);
+			//Segment segment = { {-5,8,0},{1, 1, 1}};
+			//MyDrawSegment(segment);
+			//bool test = IntersectSegmentCylinder(segment, cylindre, t, interPt, interNormal);
+			//if (test)
+			//{
+			//	MyDrawPolygonSphere({ {interPt,QuaternionIdentity()},.1f }, 16, 8, RED);
+			//	DrawLine3D(interPt, Vector3Add(Vector3Scale(interNormal, 1), interPt), RED);
+			//}
 
 			// TEST SEGMENT CAPSULE INTERSECTION
 			//ReferenceFrame refCapsule = { {0,0,1}, QuaternionFromAxisAngle({0,0,1}, time)};
@@ -2833,6 +2934,7 @@ int main(int argc, char* argv[])
 			//RoundedBox rndBox = { refRndBox, {1,2,3}, 1};
 			//MyDrawRoundedBox(rndBox, 5, true, true);
 			//Segment segment = { {0,8,1},{0,-8,1} };
+			//MyDrawSegment(segment);
 			//bool test = IntersectSegmentRoundedBox(segment, rndBox, t, interPt, interNormal);
 			//if (test)
 			//{
@@ -2862,22 +2964,35 @@ int main(int argc, char* argv[])
 			
 			#pragma region collision testing
 			
-			pos = Vector3Add(pos, Vector3Scale(vel, deltaTime));
-
 			Sphere sphere = { {pos, QuaternionIdentity() }, radius };
-			Box ground = { { { 0,-1,0 }, QuaternionIdentity()}, { 10, 1, 10 } };
-			RoundedBox obstacle = { { { 6, 3, 0}, QuaternionIdentity() }, {1,2,3}, radius };
+			Box ground = { { { 0,-1.5,0 }, QuaternionIdentity()}, { 10, 1, 10 } };
+
+			RoundedBox obstacle1 = { { { 8, 1, 0}, QuaternionIdentity() }, {5,4,4}, radius };
+			RoundedBox obstacle2 = { { { -8, 1, 0}, QuaternionIdentity() }, {5,4,4}, radius };
 
 			float colT;
 			Vector3 colSpherePos;
 			Vector3 colNormal;
 			Vector3 newPos;
 			Vector3 newVel;
+			Vector3 colPt;
+			Vector3 acc = GetAcc(vel);
 
-			bool col = GetSphereNewPositionAndVelocityIfCollidingWithRoundedBox(
+			// Test 
+
+			//RoundedBox minkowski = { obstacle.ref, {obstacle.extents.x + obstacle.radius, obstacle.extents.y + obstacle.radius, obstacle.extents.z + obstacle.radius}, sphere.radius };
+			//Box OBB = { minkowski.ref, {minkowski.extents.x + minkowski.radius, minkowski.extents.y + minkowski.radius, minkowski.extents.z + minkowski.radius} };
+			//Segment SEG = { {0,10,0}, {5, -5, 0} };
+			//MyDrawSegment(SEG);
+			//if (IntersectSegmentBox(SEG, OBB, colT, colPt, colNormal))
+			//{
+			//	MyDrawSegment({ colPt, colPt });
+			//}
+
+			bool col1 = GetSphereNewPositionAndVelocityIfCollidingWithRoundedBox(
 				sphere,
-				obstacle,
-				vel,
+				obstacle1,
+				acc,
 				deltaTime,
 				colT,
 				colSpherePos,
@@ -2886,14 +3001,35 @@ int main(int argc, char* argv[])
 				newVel
 			);
 
-			if (col)
+			bool col2 = GetSphereNewPositionAndVelocityIfCollidingWithRoundedBox(
+				sphere,
+				obstacle2,
+				acc,
+				deltaTime,
+				colT,
+				colSpherePos,
+				colNormal,
+				newPos,
+				newVel
+			);
+
+			if (col1 || col2)
 			{
 				printf("Colliding\n");
+				vel = newVel;
+				pos = Vector3Add(pos, Vector3Scale(acc, deltaTime));
+			}
+			else
+			{
+				pos = Vector3Add(pos, Vector3Scale(acc, deltaTime));
 			}
 
 			MyDrawSphere(sphere, 10, 10, true, true, LIGHTGRAY);
-			MyDrawBox(ground, true, true, DARKGRAY);			
-			MyDrawRoundedBox(obstacle, 10, true, true, LIGHTGRAY);
+
+			//MyDrawBox(ground, true, true, DARKGRAY);			
+			MyDrawRoundedBox(obstacle1, 10, true, true, LIGHTGRAY);
+			MyDrawRoundedBox(obstacle2, 10, true, true, LIGHTGRAY);
+			if (IsMouseButtonDown(MOUSE_MIDDLE_BUTTON)) pos = { -4, 4, 0 };
 
 			#pragma endregion
 		}

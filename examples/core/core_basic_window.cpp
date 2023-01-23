@@ -2472,19 +2472,46 @@ bool IntersectSegmentRoundedBox(Segment seg, RoundedBox rndBox, float& t, Vector
 
 #pragma region Collisions
 
-char GetCollisionFace(Vector3 interPt, Box box)
+bool IsMax(float x, float tab[], int n)
 {
-	Vector3 localInterPt = GlobalToLocalPos(interPt, box.ref);
+	for (int i = 0; i < n; i++)
+	{
+		if (tab[i] > x) return false;
+	}
+	return true;
+}
 
-	float coefX = fabs(localInterPt.x) / fabs(box.extents.x);
-	float coefY = fabs(localInterPt.y) / fabs(box.extents.y);
-	float coefZ = fabs(localInterPt.z) / fabs(box.extents.z);
+bool IsMin(float x, float tab[], int n)
+{
+	for (int i = 0; i < n; i++)
+	{
+		if (tab[i] < x) return false;
+	}
+	return true;
+}
 
-	if (coefX >= coefY && coefX >= coefZ) return 'X';
-	if (coefY >= coefX && coefY >= coefZ) return 'Y';
-	if (coefZ >= coefX && coefZ >= coefY) return 'Z';
+char GetNearestFace(Vector3 pos, Box box)
+{
+	Vector3 localPos = GlobalToLocalPos(pos, box.ref);
+		
+	float coefs[6] =
+	{
+		localPos.x / box.extents.x,  // right
+		localPos.x / -box.extents.x, // left
+		localPos.y / box.extents.y,	 // top
+		localPos.y / -box.extents.y, // bottom
+		localPos.z / box.extents.z,  // front
+		localPos.z / -box.extents.z  // back
+	};
 
-	return 0;
+	if (IsMax(coefs[0], coefs, 6)) return 'R';
+	else if (IsMax(coefs[1], coefs, 6)) return 'L';
+	else if (IsMax(coefs[2], coefs, 6)) return 'T';
+	else if (IsMax(coefs[3], coefs, 6)) return 'B';
+	else if (IsMax(coefs[4], coefs, 6)) return 'f';
+	else if (IsMax(coefs[5], coefs, 6)) return 'b';
+
+	return '0';
 }
 
 bool GettingCloseToDest(Vector3 pos, Vector3 acc, float deltaTime, Vector3 dest)
@@ -2496,9 +2523,16 @@ bool GettingCloseToDest(Vector3 pos, Vector3 acc, float deltaTime, Vector3 dest)
 	return false;
 }
 
+//bool WillCollideWithBox(Vector3 pos, Vector3 acc, float deltaTime, Box box)
+//{
+//	Vector3 dest = Vector3Add(Vector3Scale(acc, deltaTime, ));
+//	Segment dir = {pos, dest}
+//}
+
 bool GetSphereNewPositionAndVelocityIfCollidingWithRoundedBox(Sphere sphere, RoundedBox rndBox, Vector3 velocity, float deltaTime, float& colT, Vector3& colSpherePos, Vector3& colNormal, Vector3& newPosition, Vector3& newVelocity)
 {
-	if (!GettingCloseToDest(sphere.ref.origin, velocity, deltaTime, rndBox.ref.origin)) return false;
+	// à repenser si nécéssaire, ne marche pas
+	// if (!GettingCloseToDest(sphere.ref.origin, velocity, deltaTime, rndBox.ref.origin)) return false;
 
 	Vector3 A = sphere.ref.origin;
 	Vector3 B = Vector3Add(sphere.ref.origin, Vector3Scale(velocity, deltaTime));
@@ -2511,61 +2545,52 @@ bool GetSphereNewPositionAndVelocityIfCollidingWithRoundedBox(Sphere sphere, Rou
 	MyDrawWireframeRoundedBox(minkowski, 10, RED);
 
 	Vector3 colPt;
-	MyDrawSegment(AB);
 	if (IntersectSegmentBox(AB, OBB, colT, colPt, colNormal))
 	{
 		Vector3 localColPt = GlobalToLocalPos(colPt, OBB.ref);
+		char nearestFace = GetNearestFace(colPt, OBB);
+		printf("InBox: %c\n", nearestFace);
 
-		// Vérifier si c'est sur une face
+		bool inX = false;
+		bool inY = false;
+		bool inZ = false;
 
-		bool inX, inY, inZ;
-
-		char collisionFace = GetCollisionFace(colPt, OBB);
-		printf("%c\n", collisionFace);
-
-		if (collisionFace == 'X')
+		if (nearestFace == 'L' || nearestFace == 'R')
 		{
-			inX = fabs(localColPt.x) <= fabs(rndBox.extents.x + rndBox.radius + sphere.radius);
-			inY = fabs(localColPt.y) <= fabs(rndBox.extents.y + rndBox.radius);
-			inZ = fabs(localColPt.z) <= fabs(rndBox.extents.z + rndBox.radius);
+			inX = fabs(localColPt.x) <= rndBox.extents.x + rndBox.radius + sphere.radius + EPSILON;
+			inY = fabs(localColPt.y) <= rndBox.extents.y + rndBox.radius + EPSILON;
+			inZ = fabs(localColPt.z) <= rndBox.extents.z + rndBox.radius + EPSILON;
 		}
-		else if (collisionFace == 'Y')
+		else if (nearestFace == 'T' || nearestFace == 'B')
 		{
-			inX = fabs(localColPt.x) <= fabs(rndBox.extents.x + rndBox.radius);
-			inY = fabs(localColPt.y) <= fabs(rndBox.extents.y + rndBox.radius + sphere.radius);
-			inZ = fabs(localColPt.z) <= fabs(rndBox.extents.z + rndBox.radius);
+			inX = fabs(localColPt.x) <= rndBox.extents.x + rndBox.radius + EPSILON;
+			inY = fabs(localColPt.y) <= rndBox.extents.y + rndBox.radius + sphere.radius + EPSILON;
+			inZ = fabs(localColPt.z) <= rndBox.extents.z + rndBox.radius + EPSILON;
 		}
-		else if (collisionFace == 'Z')
+		else if (nearestFace == 'f' || nearestFace == 'b')
 		{
-			inX = fabs(localColPt.x) <= fabs(rndBox.extents.x + rndBox.radius);
-			inY = fabs(localColPt.y) <= fabs(rndBox.extents.y + rndBox.radius);
-			inZ = fabs(localColPt.z) <= fabs(rndBox.extents.z + rndBox.radius + sphere.radius);
+			inX = fabs(localColPt.x) <= rndBox.extents.x + rndBox.radius + EPSILON;
+			inY = fabs(localColPt.y) <= rndBox.extents.y + rndBox.radius + EPSILON;
+			inZ = fabs(localColPt.z) <= rndBox.extents.z + rndBox.radius + sphere.radius + EPSILON;
 		}
-
-		printf("Bool: %d, %d, %d\n", inX, inY, inZ);
-		printf("Extents: %f, %f, %f\n", rndBox.extents.x + rndBox.radius, rndBox.extents.y + rndBox.radius, rndBox.extents.z + rndBox.radius);
-		printf("Collision: %f, %f, %f\n", localColPt.x, localColPt.y, localColPt.z);
 
 		if (!(inX && inY && inZ)) return false;
-		newVelocity = Vector3Reflect(velocity, colNormal);
-		printf("New vel: %f, %f, %f\n", newVelocity.x, newVelocity.y, newVelocity.z);
+		newVelocity = Vector3Reflect(velocity, colNormal); // Changement de direction
+		newPosition = Vector3Add(colPt, Vector3Scale(newVelocity, deltaTime * (1-colT)));  // Ajout de la distance restante dans la bonne direction
+		printf("Face\n");
 		return true;
 	}
 	else if (IsPointInsideBox(OBB, B))
 	{
-		// Tester quelques capsules judicieusement choisies
 		if (IntersectSegmentRoundedBox(AB, minkowski, colT, colPt, colNormal))
 		{
+			newVelocity = Vector3Reflect(velocity, colNormal); // Changement de direction
+			newPosition = Vector3Add(colPt, Vector3Scale(newVelocity, deltaTime * (1 - colT)));  // Ajout de la distance restante dans la bonne direction
 			printf("Capsule\n");
-			newVelocity = Vector3Reflect(velocity, colNormal);
-			MyDrawSegment({ A, colPt });
 			return true;
 		}
-		else
-		{
-			return false;
-		}
 	}
+	return false;
 }
 
 
@@ -2606,9 +2631,12 @@ int main(int argc, char* argv[])
 	#pragma endregion
 
 	#pragma region Setup
-
-	Vector3 pos = { -6, 4, 0 };
-	Vector3 vel = { 2, 0, 0 };
+	
+	Vector3 initialPos = { 0, -6, 0 };
+	Vector3 initialVel = { 4, 2, 0 };
+	
+	Vector3 pos = initialPos;
+	Vector3 vel = initialVel;
 	Vector3 rot = { 0, 0, 0 };
 	float mass = 10;
 	float radius = 1;
@@ -2976,7 +3004,6 @@ int main(int argc, char* argv[])
 			Vector3 newPos;
 			Vector3 newVel;
 			Vector3 colPt;
-			Vector3 acc = GetAcc(vel);
 
 			// Test 
 
@@ -2992,7 +3019,7 @@ int main(int argc, char* argv[])
 			bool col1 = GetSphereNewPositionAndVelocityIfCollidingWithRoundedBox(
 				sphere,
 				obstacle1,
-				acc,
+				vel,
 				deltaTime,
 				colT,
 				colSpherePos,
@@ -3000,11 +3027,18 @@ int main(int argc, char* argv[])
 				newPos,
 				newVel
 			);
+
+			if (col1)
+			{
+				printf("Colliding\n");
+				vel = newVel;
+				pos = newPos;
+			}
 
 			bool col2 = GetSphereNewPositionAndVelocityIfCollidingWithRoundedBox(
 				sphere,
 				obstacle2,
-				acc,
+				vel,
 				deltaTime,
 				colT,
 				colSpherePos,
@@ -3013,15 +3047,17 @@ int main(int argc, char* argv[])
 				newVel
 			);
 
-			if (col1 || col2)
+
+			if (col2)
 			{
 				printf("Colliding\n");
 				vel = newVel;
-				pos = Vector3Add(pos, Vector3Scale(acc, deltaTime));
+				pos = newPos;
 			}
-			else
+
+			if (!(col1 || col2));
 			{
-				pos = Vector3Add(pos, Vector3Scale(acc, deltaTime));
+				pos = Vector3Add(pos, Vector3Scale(vel, deltaTime));
 			}
 
 			MyDrawSphere(sphere, 10, 10, true, true, LIGHTGRAY);
@@ -3029,8 +3065,11 @@ int main(int argc, char* argv[])
 			//MyDrawBox(ground, true, true, DARKGRAY);			
 			MyDrawRoundedBox(obstacle1, 10, true, true, LIGHTGRAY);
 			MyDrawRoundedBox(obstacle2, 10, true, true, LIGHTGRAY);
-			if (IsMouseButtonDown(MOUSE_MIDDLE_BUTTON)) pos = { -4, 4, 0 };
-
+			if (IsMouseButtonDown(MOUSE_MIDDLE_BUTTON))
+			{
+				pos = initialPos;
+				vel = initialVel;
+			}
 			#pragma endregion
 		}
 		EndMode3D();

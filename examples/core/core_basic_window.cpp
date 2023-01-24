@@ -18,35 +18,6 @@ using namespace std;
 
 #define EPSILON 1.e-6f
 
-std::vector<Color> COLORS =
-{
-	LIGHTGRAY,
-	GRAY,
-	DARKGRAY,
-	YELLOW,
-	GOLD,
-	ORANGE,
-	PINK,
-	RED,
-	MAROON,
-	GREEN,
-	LIME,
-	DARKGREEN,
-	SKYBLUE,
-	BLUE,
-	DARKBLUE,
-	PURPLE,
-	VIOLET,
-	DARKPURPLE,
-	BEIGE,
-	BROWN,
-	DARKBROWN,
-	WHITE,
-	BLACK,
-	MAGENTA,
-	RAYWHITE
-};
-
 template <typename T> int sgn(T val) {
 	return (T(0) < val) - (val < T(0));
 }
@@ -2116,7 +2087,7 @@ bool IntersectSegmentInfiniteCylinder(Segment segment, Cylinder cylinder, float&
 		return true;
 	}
 
-	if (delta == 0)
+	if (fabs(delta) <= EPSILON)
 	{
 		t = -b / (2 * a);
 		return true;
@@ -2572,58 +2543,70 @@ bool WillCollideWithBox(Vector3 pos, Vector3 acc, float deltaTime, Box box, stri
 bool GetSphereNewPositionAndVelocityIfCollidingWithRoundedBox(Sphere sphere, RoundedBox rndBox, Vector3 velocity, float deltaTime, float& colT, Vector3& colSpherePos, Vector3& colNormal, Vector3& newPosition, Vector3& newVelocity)
 {
 	RoundedBox minkowski = { rndBox.ref, {rndBox.extents.x + rndBox.radius, rndBox.extents.y + rndBox.radius, rndBox.extents.z + rndBox.radius}, sphere.radius};
-	Box OBB = { minkowski.ref, {minkowski.extents.x + minkowski.radius, minkowski.extents.y + minkowski.radius, minkowski.extents.z + minkowski.radius} };
-
 	Vector3 A = sphere.ref.origin;
 	Vector3 B = Vector3Add(sphere.ref.origin, Vector3Scale(velocity, deltaTime));
 	Segment AB = { A, B };
-
-	//MyDrawWireframeBox(OBB, BLUE);
-	//MyDrawWireframeRoundedBox(minkowski, 10, RED);
-
 	Vector3 colPt;
-	if (IntersectSegmentBox(AB, OBB, colT, colPt, colNormal))
+
+	if (IntersectSegmentRoundedBox(AB, minkowski, colT, colPt, colNormal))
 	{
-		Vector3 localColPt = GlobalToLocalPos(colPt, OBB.ref);
-		char nearestFace = GetNearestFace(colPt, OBB);
-
-		bool inX = false;
-		bool inY = false;
-		bool inZ = false;
-
-		if (nearestFace == 'L' || nearestFace == 'R')
-		{
-			inX = fabs(localColPt.x) <= rndBox.extents.x + rndBox.radius + sphere.radius + EPSILON;
-			inY = fabs(localColPt.y) <= rndBox.extents.y + rndBox.radius + EPSILON;
-			inZ = fabs(localColPt.z) <= rndBox.extents.z + rndBox.radius + EPSILON;
-		}
-		else if (nearestFace == 'T' || nearestFace == 'B')
-		{
-			inX = fabs(localColPt.x) <= rndBox.extents.x + rndBox.radius + EPSILON;
-			inY = fabs(localColPt.y) <= rndBox.extents.y + rndBox.radius + sphere.radius + EPSILON;
-			inZ = fabs(localColPt.z) <= rndBox.extents.z + rndBox.radius + EPSILON;
-		}
-		else if (nearestFace == 'f' || nearestFace == 'b')
-		{
-			inX = fabs(localColPt.x) <= rndBox.extents.x + rndBox.radius + EPSILON;
-			inY = fabs(localColPt.y) <= rndBox.extents.y + rndBox.radius + EPSILON;
-			inZ = fabs(localColPt.z) <= rndBox.extents.z + rndBox.radius + sphere.radius + EPSILON;
-		}
-
-		if (!(inX && inY && inZ)) return false;
 		newVelocity = Vector3Reflect(velocity, colNormal); // Changement de direction
-		newPosition = Vector3Add(colPt, Vector3Scale(newVelocity, deltaTime * (1-colT)));  // Ajout de la distance restante dans la bonne direction
+		newPosition = Vector3Add(colPt, Vector3Scale(newVelocity, deltaTime * (1 - colT)));  // Ajout de la distance restante dans la bonne direction
+		return true;
 		return true;
 	}
-	else if (IsPointInsideBox(OBB, B))
-	{
-		if (IntersectSegmentRoundedBox(AB, minkowski, colT, colPt, colNormal))
-		{
-			newVelocity = Vector3Reflect(velocity, colNormal); // Changement de direction
-			newPosition = Vector3Add(colPt, Vector3Scale(newVelocity, deltaTime * (1 - colT)));  // Ajout de la distance restante dans la bonne direction
-			return true;
-		}
-	}
+	//Box OBB = { minkowski.ref, {minkowski.extents.x + minkowski.radius, minkowski.extents.y + minkowski.radius, minkowski.extents.z + minkowski.radius} };
+	//
+	//Vector3 A = sphere.ref.origin;
+	//Vector3 B = Vector3Add(sphere.ref.origin, Vector3Scale(velocity, deltaTime));
+	//Segment AB = { A, B };
+	//
+	////MyDrawWireframeBox(OBB, BLUE);
+	////MyDrawWireframeRoundedBox(minkowski, 10, RED);
+	//
+	//Vector3 colPt;
+	//if (IntersectSegmentBox(AB, OBB, colT, colPt, colNormal))
+	//{
+	//	Vector3 localColPt = GlobalToLocalPos(colPt, OBB.ref);
+	//	char nearestFace = GetNearestFace(colPt, OBB);
+	//
+	//	bool inX = false;
+	//	bool inY = false;
+	//	bool inZ = false;
+	//
+	//	if (nearestFace == 'L' || nearestFace == 'R')
+	//	{
+	//		inX = fabs(localColPt.x) <= rndBox.extents.x + rndBox.radius + sphere.radius + EPSILON;
+	//		inY = fabs(localColPt.y) <= rndBox.extents.y + rndBox.radius + EPSILON;
+	//		inZ = fabs(localColPt.z) <= rndBox.extents.z + rndBox.radius + EPSILON;
+	//	}
+	//	else if (nearestFace == 'T' || nearestFace == 'B')
+	//	{
+	//		inX = fabs(localColPt.x) <= rndBox.extents.x + rndBox.radius + EPSILON;
+	//		inY = fabs(localColPt.y) <= rndBox.extents.y + rndBox.radius + sphere.radius + EPSILON;
+	//		inZ = fabs(localColPt.z) <= rndBox.extents.z + rndBox.radius + EPSILON;
+	//	}
+	//	else if (nearestFace == 'f' || nearestFace == 'b')
+	//	{
+	//		inX = fabs(localColPt.x) <= rndBox.extents.x + rndBox.radius + EPSILON;
+	//		inY = fabs(localColPt.y) <= rndBox.extents.y + rndBox.radius + EPSILON;
+	//		inZ = fabs(localColPt.z) <= rndBox.extents.z + rndBox.radius + sphere.radius + EPSILON;
+	//	}
+	//
+	//	if (!(inX && inY && inZ)) return false;
+	//	newVelocity = Vector3Reflect(velocity, colNormal); // Changement de direction
+	//	newPosition = Vector3Add(colPt, Vector3Scale(newVelocity, deltaTime * (1-colT)));  // Ajout de la distance restante dans la bonne direction
+	//	return true;
+	//}
+	//else if (IsPointInsideBox(OBB, B))
+	//{
+	//	if (IntersectSegmentRoundedBox(AB, minkowski, colT, colPt, colNormal))
+	//	{
+	//		newVelocity = Vector3Reflect(velocity, colNormal); // Changement de direction
+	//		newPosition = Vector3Add(colPt, Vector3Scale(newVelocity, deltaTime * (1 - colT)));  // Ajout de la distance restante dans la bonne direction
+	//		return true;
+	//	}
+	//}
 	return false;
 }
 
@@ -2671,7 +2654,7 @@ int main(int argc, char* argv[])
 
 	InitWindow(screenWidth, screenHeight, "ESIEE - E3FI - 2022 - 2023 - Maths 3D");
 
-	SetTargetFPS(60);
+	SetTargetFPS(240);
 
 	// CAMERA 
 	Vector3 cameraPos = { 8, 15, 14 };
@@ -2690,7 +2673,7 @@ int main(int argc, char* argv[])
 	#pragma region Setup
 	
 	Vector3 initialPos = { 0, 2, 0 };
-	Vector3 initialVel = { 8, 4, 0 };
+	Vector3 initialVel = { 16, 8, 0 };
 	
 	Vector3 pos = initialPos;
 	Vector3 vel = initialVel;
@@ -3049,10 +3032,10 @@ int main(int argc, char* argv[])
 				{ { { 0,4,20 }, QuaternionFromAxisAngle({0,0,0}, 0)}, {20, 5, 0.2}, 0, GRAY}, // Wall
 				{ { { 0,4,-20 }, QuaternionFromAxisAngle({0,0,0}, 0)}, {20, 5, 0.2}, 0, GRAY}, // Wall
 				
-				{ { { 8, 3, 0}, QuaternionIdentity() }, {1,1,1}, 0.5f, RED },
-				{ { { -8, 3, 0}, QuaternionIdentity() }, {1,1,1}, 0.5f, GRAY },
-				{ { { 0, 3, 8}, QuaternionIdentity() }, {1,1,1}, 0.5f, RED },
-				{ { { 0, 3, -8}, QuaternionIdentity() }, {1,1,1}, 0.5f, GRAY }
+				{ { { 8, 3, 0}, QuaternionIdentity() }, {1,1,1}, 1.f, RED },
+				{ { { -8, 3, 0}, QuaternionIdentity() }, {1,1,1}, 1.f, RED },
+				{ { { 0, 3, 8}, QuaternionIdentity() }, {1,1,1}, 1.f, RED },
+				{ { { 0, 3, -8}, QuaternionIdentity() }, {1,1,1}, 1.f, RED }
 			};
 
 			float colT;
@@ -3079,7 +3062,7 @@ int main(int argc, char* argv[])
 			{
 				if (rndBox.color.a != 0)
 				{
-					MyDrawRoundedBox(rndBox, 10, true, true, rndBox.color);
+					MyDrawRoundedBox(rndBox, 10, true, false, rndBox.color);
 				}
 			}
 
@@ -3110,6 +3093,7 @@ int main(int argc, char* argv[])
 
 			#pragma endregion
 
+			printf("%f FPS\n", 1/deltaTime);
 			#pragma endregion
 		}
 		EndMode3D();

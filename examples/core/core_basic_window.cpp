@@ -17,6 +17,7 @@ using namespace std;
 #endif
 
 #define EPSILON 1.e-6f
+#define GRAVITY {0, -9.81, 0}
 
 template <typename T> int sgn(T val) {
 	return (T(0) < val) - (val < T(0));
@@ -2634,6 +2635,11 @@ bool GetSphereNewPositionAndVelocityIfCollidingWithRoundedBoxes(Sphere sphere, c
 	return collided;
 }
 
+bool GetSphereNewPositionAndVelocityIfMultiCollidingWithRoundedBoxes(Sphere sphere, const std::vector<RoundedBox>& rndBoxes, Vector3 velocity, float rotInertia, Vector3 angularMomentum, float deltaTime, int nMaxSuccessiveCollisions, Vector3& newPosition, Vector3& newVelocity, Vector3 newAngularMomentum)
+{
+	return false;
+}
+
 #pragma endregion
 
 Vector3 GetAcc(Vector3 vel)
@@ -2673,13 +2679,14 @@ int main(int argc, char* argv[])
 	#pragma region Setup
 	
 	Vector3 initialPos = { 0, 2, 0 };
-	Vector3 initialVel = { 16, 8, 0 };
-	
+	Vector3 initialVel = { 1000, 20, 0 };
+	float mass = 10;
+	float radius = 1;
+	float E = 0.5f * (mass * Vector3Length(initialVel) + mass * Vector3Length(GRAVITY) * initialPos.y);
+	float initialE = E;
 	Vector3 pos = initialPos;
 	Vector3 vel = initialVel;
 	Vector3 rot = { 0, 0, 0 };
-	float mass = 10;
-	float radius = 1;
 
 	#pragma endregion
 
@@ -3019,6 +3026,7 @@ int main(int argc, char* argv[])
 			unsigned char r = colorPercentage * 153;
 			unsigned char g = colorPercentage * 204;
 			unsigned char b = colorPercentage * 255;
+
 			Color highlightColor = { r, g, b, 255 };
 			//printf("%d, %d, %d\n", r, g, b);
 			Sphere sphere = { {pos, QuaternionIdentity() }, radius };
@@ -3045,9 +3053,21 @@ int main(int argc, char* argv[])
 			Vector3 newVel;
 			Vector3 colPt;
 
+			vel = Vector3Add(vel, Vector3Scale(GRAVITY, deltaTime));
+			float k = mass * Vector3Length(GRAVITY) * (sphere.ref.origin.y - initialPos.y);
+			float vitesse = sqrtf(2 * (E - k) / mass);
+			//printf("E: %f\n", E);
+			if (E > k) {
+				vel = Vector3Scale(Vector3Normalize(vel), vitesse);
+			}
+			else {
+				printf("K: %f\n", k);
+			}
+			
 			bool collide = GetSphereNewPositionAndVelocityIfCollidingWithRoundedBoxes(sphere, boxes, vel, deltaTime, colT, colSpherePos, colNormal, newPos, newVel);
 			if (collide)
 			{
+				E *= 0.8;
 				vel = newVel;
 				pos = newPos;
 			}
@@ -3093,7 +3113,7 @@ int main(int argc, char* argv[])
 
 			#pragma endregion
 
-			printf("%f FPS\n", 1/deltaTime);
+			//printf("%f FPS\n", 1/deltaTime);
 			#pragma endregion
 		}
 		EndMode3D();

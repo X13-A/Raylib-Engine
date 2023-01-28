@@ -23,6 +23,13 @@ template <typename T> int sgn(T val) {
 	return (T(0) < val) - (val < T(0));
 }
 
+enum modes
+{
+	GAME,
+	PHYSICS,
+	DRAW
+};
+
 #pragma endregion
 
 #pragma region Structs
@@ -2599,6 +2606,8 @@ bool GetSphereNewPositionAndVelocityIfMultiCollidingWithRoundedBoxes(Sphere sphe
 
 #pragma endregion
 
+#pragma region Game utils
+
 /// <summary>
 /// Génère une grille aléatoire configurable d'obstacles
 /// </summary>
@@ -2611,13 +2620,13 @@ std::vector<RoundedBox> GenerateRandomObstacleGrid(float width, float depth, int
 	// Ajout des murs de base
 	std::vector<RoundedBox> obstacles =
 	{
-		{ { { 0,-1,0 }, QuaternionIdentity()}, { 20, 0.2, 20 }, 0, LIGHTGRAY },
+		{ { { 0,-1,0 }, QuaternionIdentity()}, { 20, 0.2, 20 }, 0, GRAY },
 		{ { { 0,20,0 }, QuaternionIdentity()}, { 20, 0.2, 20 }, 0, BLANK},
 
-		{ { { -20,8,0 }, QuaternionFromAxisAngle({0,1,0}, PI / 2)}, {20, 10, 0.2}, 0, GRAY},
-		{ { { 20,8,0 }, QuaternionFromAxisAngle({0,1,0}, -PI / 2)}, {20, 10, 0.2}, 0, GRAY},
-		{ { { 0,8,20 }, QuaternionFromAxisAngle({0,0,0}, 0)}, {20, 10, 0.2}, 0, GRAY},
-		{ { { 0,8,-20 }, QuaternionFromAxisAngle({0,0,0}, 0)}, {20, 10, 0.2}, 0, GRAY},
+		{ { { -20,8,0 }, QuaternionFromAxisAngle({0,1,0}, PI / 2)}, {20, 10, 0.2}, 0, LIGHTGRAY},
+		{ { { 20,8,0 }, QuaternionFromAxisAngle({0,1,0}, -PI / 2)}, {20, 10, 0.2}, 0, LIGHTGRAY},
+		{ { { 0,8,20 }, QuaternionFromAxisAngle({0,0,0}, 0)}, {20, 10, 0.2}, 0, LIGHTGRAY},
+		{ { { 0,8,-20 }, QuaternionFromAxisAngle({0,0,0}, 0)}, {20, 10, 0.2}, 0, LIGHTGRAY},
 	};
 
 	std::vector<Vector3> coords = {};
@@ -2628,7 +2637,7 @@ std::vector<RoundedBox> GenerateRandomObstacleGrid(float width, float depth, int
 
 	float val, rot, radius, x, z;
 	int index;
-	float boxSize = (min(width, depth) / d - 1) / 2;
+	float boxSize = (min(width, depth) / d - 2) / 2;
 	if (boxSize <= 0) return obstacles;
 	if (n > d * d) n = d * d;
 
@@ -2658,7 +2667,7 @@ std::vector<RoundedBox> GenerateRandomObstacleGrid(float width, float depth, int
 			ref = { coord, QuaternionFromAxisAngle(rotAxis, rot) };
 
 			radius = boxSize * (rand() % 100) / 100.f;
-			color = { (unsigned char)(rand() % 255),(unsigned char)(rand() % 255),(unsigned char)(rand() % 255), 255 };
+			color = { (unsigned char)(rand() % 155 + 100),(unsigned char)(rand() % 155 + 100),(unsigned char)(rand() % 155 + 100), 255 };
 			obstacles.push_back({ ref, {boxSize - radius, boxSize - radius, boxSize - radius}, radius, color });
 		}
 		// Possibilité d'avoir une grille prédéfinie pour une meilleure fiabilité des benchmarks
@@ -2677,6 +2686,93 @@ std::vector<RoundedBox> GenerateRandomObstacleGrid(float width, float depth, int
 	}
 
 	return obstacles;
+}
+
+void DisplayTests(float time, float deltaTime)
+{
+	ReferenceFrame ref;
+	static float angle = 0;
+	Vector3 axes = { 1, 1, 1 };
+	angle += (2*PI) * 0.25 * deltaTime;
+
+	Color polygonColor = SKYBLUE;
+	Color wireframeColor = BLACK;
+	int geometry = 10;
+
+	float width = 60;
+	float start = -width / 2;
+	float interval = width / 10;
+	float i = 0;
+
+	//QUAD DISPLAY TEST
+	ref = ReferenceFrame(
+		{ start + interval*i++,0,0 },
+		QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+	Quad quad = { ref,{1, 0, 2} };
+	MyDrawQuad(quad, true, true, polygonColor, wireframeColor);
+
+	// DISK DISPLAY TEST
+	ref = ReferenceFrame(
+		{ start + interval * i++,0,0 },
+		QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+	Disk disk = { ref, 2 };
+	MyDrawDisk(disk, geometry, true, true, polygonColor, wireframeColor);
+
+	//BOX DISPLAY TEST
+	ref = ReferenceFrame(
+		{ start + interval * i++,0,0 },
+		QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+	Box box = { ref, {1, 1, 2} };
+	MyDrawBox(box, true, true, polygonColor, wireframeColor);
+
+	// SPHERE DISPLAY TEST
+	ref = ReferenceFrame(
+		{ start + interval * i++,0,0 },
+		QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+	Sphere sphere = { ref, 2 };
+	MyDrawSphere(sphere, geometry, geometry, true, true, polygonColor, wireframeColor);
+
+	// CYLINDER DISPLAY TEST
+	ref = ReferenceFrame(
+		{ start + interval * i++,0,0 },
+		QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+	Cylinder cylinder = { ref, 1, 2 };
+	MyDrawCylinder(cylinder, geometry, false, true, true, polygonColor, wireframeColor);
+
+	// CYLINDER QUARTER DISPLAY TEST
+	ref = ReferenceFrame(
+		{ start + interval * i++,0,0 },
+		QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+	CylinderQuarter cylinderQuarter = { ref, 1, 2 };
+	MyDrawCylinderQuarter(cylinderQuarter, geometry, true, true, true, polygonColor, wireframeColor);
+
+	// SPHERE CORNER DISPLAY TEST
+	ref = ReferenceFrame(
+		{ start + interval * i++,0,0 },
+		QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+	SphereCorner sphCorner = { ref, 2 };
+	MyDrawSphereCorner(sphCorner, geometry, geometry, true, true, polygonColor, wireframeColor);
+
+	// CAPSULE DISPLAY TEST
+	ref = ReferenceFrame(
+		{ start + interval * i++,0,0 },
+		QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+	Capsule capsule = { ref, 2, 2 };
+	MyDrawCapsule(capsule, geometry, geometry, true, true, polygonColor, wireframeColor);
+
+	// HEMISPHERE DISPLAY TEST
+	ref = ReferenceFrame(
+		{ start + interval * i++,0,0 },
+		QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+	Hemisphere hemisphere = { ref, 2 };
+	MyDrawHemisphere(hemisphere, geometry, geometry, true, true, polygonColor, wireframeColor);
+
+	// ROUNDEDBOX DISPLAY TEST
+	ref = ReferenceFrame(
+		{ start + interval * i++,0,0 },
+		QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
+	RoundedBox roundedBox = { ref, {1,1,1}, 1 };
+	MyDrawRoundedBox(roundedBox, geometry, true, true, polygonColor, wireframeColor);
 }
 
 // Utilisé pour les contrôles du joueur
@@ -2711,6 +2807,8 @@ Color GetSinusoidalColor(Color color, float time)
 	unsigned char b = colorPercentage * color.b;
 	return { r, g, b, 255 };
 }
+
+#pragma endregion
 
 int main(int argc, char* argv[])
 {
@@ -2756,20 +2854,24 @@ int main(int argc, char* argv[])
 	RoundedBox player = basePlayer;
 
 	int score = 0;
-	bool game = true;
-	if (game)
+	modes mode = GAME;
+	if (mode == GAME)
 	{
 		initialPos = { 0, 10, 0 };
 		initialVel = { 0, 10, 0 };
 		camera.position = SphericalToCartesian({ 15, 0, PI / 4.f });
 		objects = { player };
 	}
-	else
+	else if (mode == PHYSICS)
 	{
 		initialPos = { 0, 15, 0 };
 		initialVel = { 15, 4, 10 };
 		debugObjects = GenerateRandomObstacleGrid(38, 38, 5, 10000, 3, true);
 		objects = debugObjects;
+	}
+	else if (mode == DRAW)
+	{
+		camera.position = SphericalToCartesian({ 15, 0, PI / 4.f });
 	}
 
 	// Physics
@@ -2800,7 +2902,7 @@ int main(int argc, char* argv[])
 
 		float deltaTime = GetFrameTime();
 		float time = (float)GetTime();
-		if (!game) MyUpdateOrbitalCamera(&camera, deltaTime);
+		if (mode != GAME) MyUpdateOrbitalCamera(&camera, deltaTime);
 
 		// Draw
 		//----------------------------------------------------------------------------------
@@ -2810,129 +2912,43 @@ int main(int argc, char* argv[])
 
 		BeginMode3D(camera);
 		{
-			#pragma region display tests
-
-			//ReferenceFrame ref;
-			//static float angle = 0;
-			//angle += 0.05;
-			//Vector3 axes = { 1, 1, 1 };
-
-			////PLANE DISPLAY TEST
-			//ref = ReferenceFrame(
-			//	{ camera.position.x, -10, camera.position.z },
-			//	QuaternionFromAxisAngle(Vector3Normalize({ 0,0,0 }), 0));
-			//Quad plane = { ref,{10000, 0, 10000} };
-			//MyDrawQuad(plane, true, false, LIGHTGRAY);
-
-			//// DISK DISPLAY TEST
-			//ref = ReferenceFrame(
-			//	{ -20,0,0 },
-			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			//Disk disk = { ref, 2 };
-			//MyDrawDisk(disk, 15, true, true);
-
-			////BOX DISPLAY TEST
-			//ref = ReferenceFrame(
-			//	{ 0,0,0 },
-			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			//Box box = { ref, {1, 1, 2} };
-			//MyDrawBox(box, true, true, BLUE, BLACK);
-
-			///*Vector3 sphPos = { 1.8,0,0 };
-			//ref = ReferenceFrame(
-			//	sphPos,
-			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			//Sphere sphere = { ref, .15f };
-			//MyDrawSphere(sphere, 10, 10, true, true, GREEN, BLACK);
-			//cout << IsPointInsideBox(box, sphPos) << "\n";*/
-
-			////QUAD DISPLAY TEST
-			//ref = ReferenceFrame(
-			//	{ -10,0,0 },
-			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			//Quad quad = { ref,{1, 0, 2} };
-			//MyDrawQuad(quad, true, true);
-
-			//// SPHERE DISPLAY TEST
-			//ref = ReferenceFrame(
-			//	{ -5,0,0 },
-			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			//Sphere sphere = { ref, 2 };
-			//MyDrawSphere(sphere, 15, 15, true, true);
-
-			//// CYLINDER DISPLAY TEST
-			//ref = ReferenceFrame(
-			//	{ 0,0,0 },
-			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			//Cylinder cylinder = { ref, 1, 2 };
-			//MyDrawCylinder(cylinder, 15, false, true, true);
-
-			//// CYLINDER QUARTER DISPLAY TEST
-			//ref = ReferenceFrame(
-			//	{ 5,0,0 },
-			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			//CylinderQuarter cylinderQuarter = { ref, 1, 2 };
-			//MyDrawCylinderQuarter(cylinderQuarter, 30, true, true, true);
-
-			//// SPHERE CORNER DISPLAY TEST
-			//ref = ReferenceFrame(
-			//	{ 10,0,0 },
-			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			//SphereCorner sphCorner = { ref, 2 };
-			//MyDrawSphereCorner(sphCorner, 10, 10, true, true);
-
-			//// CAPSULE DISPLAY TEST
-			//ref = ReferenceFrame(
-			//	{ 15,0,0 },
-			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			//Capsule capsule = { ref, 2, 2 };
-			//MyDrawCapsule(capsule, 25, 25, true, true, BLUE, WHITE);
-
-			//// HEMISPHERE DISPLAY TEST
-			//ref = ReferenceFrame(
-			//	{ 20,0,0 },
-			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			//Hemisphere hemisphere = { ref, 2 };
-			//MyDrawHemisphere(hemisphere, 15, 15, true, true);
-
-			//// ROUNDEDBOX DISPLAY TEST
-			//ref = ReferenceFrame(
-			//	{ 5,8,0 },
-			//	QuaternionFromAxisAngle(Vector3Normalize(axes), angle));
-			///* {ref, {Longeur Largeur Hauteur}, Radius} */
-			//RoundedBox roundedBox = { ref, {5,2,3}, 2 };
-			//MyDrawRoundedBox(roundedBox, 10, true, true, RED, WHITE);
-
-#pragma endregion
-
 			#pragma region game management
 
-			Sphere sphere = { {pos, QuaternionFromAxisAngle(Vector3Normalize(angularMomentum), rotInertia * time * rotSpeed)}, radius, GetSinusoidalColor(sphereColor, time) };
+			Sphere sphere = { {pos, QuaternionFromAxisAngle(Vector3Normalize(angularMomentum), rotInertia * time * rotSpeed)}, radius, sphereColor };
 
+			#pragma region change mode
+			
 			if (IsKeyPressed(KEY_G))
 			{
-				game = true;
 				player = basePlayer;
 				initialPos = { 0, 5, 0 };
 				initialVel = { 0, 10, 0 };
 				pos = initialPos;
 				vel = initialVel;
 				score = 0;
-				camera.position = SphericalToCartesian({ 15, 0, PI / 4.f });
+				if (mode != GAME) camera.position = SphericalToCartesian({ 15, 0, PI / 4.f });
+				mode = GAME;
 			}
 			else if (IsKeyPressed(KEY_D))
 			{
-				game = false;
 				debugObjects = GenerateRandomObstacleGrid(38, 38, 5, 10000, 3, true);
 				objects = debugObjects;				
 				initialPos = { 0, 15, 0 };
 				initialVel = { 15, 4, 10 };
 				pos = initialPos;
 				vel = { (float)(rand() % 40 - 20), (float)(rand() % 20), (float)(rand() % 40 - 20) };
-				camera.position = SphericalToCartesian({ 30,  PI / 4.f, PI / 4.f });
+				if (mode != PHYSICS) camera.position = SphericalToCartesian({ 30,  PI / 4.f, PI / 4.f });
+				mode = PHYSICS;
+			}
+			else if (IsKeyPressed(KEY_F))
+			{
+				if (mode != DRAW) camera.position = SphericalToCartesian({ 30,  0, PI / 4.f });
+				mode = DRAW;
 			}
 
-			if (game)
+			#pragma endregion
+
+			if (mode == GAME)
 			{
 				objects = { player };
 				Game(player, sphere, deltaTime);
@@ -2944,7 +2960,14 @@ int main(int argc, char* argv[])
 					player = basePlayer;
 				}
 			}
-			else objects = debugObjects;
+			else if (mode == PHYSICS)
+			{
+				objects = debugObjects;
+			}
+			else if (mode == DRAW)
+			{
+				DisplayTests(time, deltaTime);
+			}
 
 			#pragma endregion
 
@@ -2958,30 +2981,33 @@ int main(int argc, char* argv[])
 			Vector3 colPt;
 			Color newColor;
 
-			vel = Vector3Add(vel, Vector3Scale(GRAVITY, deltaTime));
-			float k = mass * Vector3Length(GRAVITY) * (sphere.ref.origin.y - initialPos.y);
-			float vitesse = sqrtf(2 * (E - k) / mass);
-			if (E > k) vel = Vector3Scale(Vector3Normalize(vel), vitesse);
-
-			bool collide = GetSphereNewPositionAndVelocityIfMultiCollidingWithRoundedBoxes(sphere, objects, vel, rotInertia, angularMomentum, deltaTime, 100, newPos, newVel, angularMomentum, colNormal, colSpherePos, newColor);
-			if (collide)
+			if (mode != DRAW)
 			{
-				//E *= 0.8;
-				omegaC = GlobalToLocalVect(colSpherePos, sphere.ref);
-				angularMomentum = Vector3Subtract(angularMomentum, Vector3Scale(Vector3CrossProduct(omegaC, Vector3Subtract(vel, Vector3Add(Vector3Scale(colNormal, Vector3DotProduct(vel, colNormal)), Vector3CrossProduct(rot, omegaC)))), 1 * deltaTime));
-				vel = newVel;
-				pos = newPos;
-				sphereColor = newColor;
-				score += 1;
-			}
-			else pos = Vector3Add(pos, Vector3Scale(vel, deltaTime));
+				vel = Vector3Add(vel, Vector3Scale(GRAVITY, deltaTime));
+				float k = mass * Vector3Length(GRAVITY) * (sphere.ref.origin.y - initialPos.y);
+				float vitesse = sqrtf(2 * (E - k) / mass);
+				if (E > k) vel = Vector3Scale(Vector3Normalize(vel), vitesse);
 
-			MyDrawSphere(sphere, 15, 15, true, true, sphere.color);
-			for (const RoundedBox& rndBox : objects)
-			{
-				if (rndBox.color.a != 0)
+				bool collide = GetSphereNewPositionAndVelocityIfMultiCollidingWithRoundedBoxes(sphere, objects, vel, rotInertia, angularMomentum, deltaTime, 100, newPos, newVel, angularMomentum, colNormal, colSpherePos, newColor);
+				if (collide)
 				{
-					MyDrawRoundedBox(rndBox, 3, true, true, rndBox.color);
+					//E *= 0.8;
+					omegaC = GlobalToLocalVect(colSpherePos, sphere.ref);
+					angularMomentum = Vector3Subtract(angularMomentum, Vector3Scale(Vector3CrossProduct(omegaC, Vector3Subtract(vel, Vector3Add(Vector3Scale(colNormal, Vector3DotProduct(vel, colNormal)), Vector3CrossProduct(rot, omegaC)))), 1 * deltaTime));
+					vel = newVel;
+					pos = newPos;
+					sphereColor = newColor;
+					score += 1;
+				}
+				else pos = Vector3Add(pos, Vector3Scale(vel, deltaTime));
+
+				MyDrawSphere(sphere, 15, 15, true, true, sphere.color);
+				for (const RoundedBox& rndBox : objects)
+				{
+					if (rndBox.color.a != 0)
+					{
+						MyDrawRoundedBox(rndBox, 3, true, true, rndBox.color);
+					}
 				}
 			}
 
@@ -2989,13 +3015,13 @@ int main(int argc, char* argv[])
 
 			#pragma region Debug controls
 
-			if (!game && IsKeyDown(KEY_SPACE))
+			if (mode == PHYSICS && IsKeyDown(KEY_SPACE))
 			{
 				pos = initialPos;
 				vel = { (float)(rand() % 40 - 20), (float)(rand() % 20), (float)(rand() % 40 - 20) };
 			}
 
-			if (!game && IsMouseButtonDown(MOUSE_LEFT_BUTTON))
+			if (mode == PHYSICS && IsMouseButtonDown(MOUSE_LEFT_BUTTON))
 			{
 				Vector3 ray = Vector3Scale(Vector3Subtract(camera.target, camera.position), 100);
 				Segment shoot = { camera.position, Vector3Add(camera.position, ray) };
@@ -3037,53 +3063,57 @@ int main(int argc, char* argv[])
 		static float spacing = 3;
 		static Color fontColor = GREEN;
 		static Color shadowColor = BLACK;
-
+		float i = 0;
 		DrawTextEx(GetFontDefault(), FormatText("Avg FPS: %.2f", averageFPS), { 10 + shadowOffset, 10 + shadowOffset }, fontSize, spacing, shadowColor);
 		DrawTextEx(GetFontDefault(), FormatText("Avg FPS: %.2f", averageFPS), { 10, 10 }, fontSize, spacing, fontColor);
-
-		DrawTextEx(GetFontDefault(), FormatText("Velocity: {%0.2f, %0.2f, %0.2f}", vel.x, vel.y, vel.z), { 10 + shadowOffset, 10 + 50 + shadowOffset }, fontSize, spacing, shadowColor);
-		DrawTextEx(GetFontDefault(), FormatText("Velocity: {%0.2f, %0.2f, %0.2f}", vel.x, vel.y, vel.z), { 10, 10 + 50 }, fontSize, spacing, fontColor);
-
-		DrawTextEx(GetFontDefault(), FormatText("Angular momentum: {%0.2f, %0.2f, %0.2f}", angularMomentum.x, angularMomentum.y, angularMomentum.z), { 10 + shadowOffset, 10 + 100 + shadowOffset }, fontSize, spacing, shadowColor);
-		DrawTextEx(GetFontDefault(), FormatText("Angular momentum: {%0.2f, %0.2f, %0.2f}", angularMomentum.x, angularMomentum.y, angularMomentum.z), { 10, 10 + 100 }, fontSize, spacing, fontColor);
-
-		DrawTextEx(GetFontDefault(), FormatText("D: debug mode / regenerate grid"), { 10 + shadowOffset, 10 + 150 + shadowOffset }, fontSize, spacing, shadowColor);
-		DrawTextEx(GetFontDefault(), FormatText("D: debug mode / regenerate grid"), { 10, 10 + 150 }, fontSize, spacing, !game ? DARKGRAY : SKYBLUE);
-
-		DrawTextEx(GetFontDefault(), FormatText("G: game mode"), { 10 + shadowOffset, 10 + 200 + shadowOffset }, fontSize, spacing, shadowColor);
-		DrawTextEx(GetFontDefault(), FormatText("G: game mode"), { 10, 10 + 200 }, fontSize, spacing, game ? DARKGRAY : SKYBLUE);
-
-		if (game == true)
+		i++;
+		DrawTextEx(GetFontDefault(), FormatText("Velocity: {%0.2f, %0.2f, %0.2f}", vel.x, vel.y, vel.z), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
+		DrawTextEx(GetFontDefault(), FormatText("Velocity: {%0.2f, %0.2f, %0.2f}", vel.x, vel.y, vel.z), { 10, 10 + 50*i }, fontSize, spacing, fontColor);
+		i++;
+		DrawTextEx(GetFontDefault(), FormatText("Angular momentum: {%0.2f, %0.2f, %0.2f}", angularMomentum.x, angularMomentum.y, angularMomentum.z), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
+		DrawTextEx(GetFontDefault(), FormatText("Angular momentum: {%0.2f, %0.2f, %0.2f}", angularMomentum.x, angularMomentum.y, angularMomentum.z), { 10, 10 + 50*i }, fontSize, spacing, fontColor);
+		i+=2;
+		DrawTextEx(GetFontDefault(), FormatText("D: physics mode | regenerate grid"), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
+		DrawTextEx(GetFontDefault(), FormatText("D: physics mode | regenerate grid"), { 10, 10 + 50*i }, fontSize, spacing, mode==PHYSICS ? DARKGRAY : SKYBLUE);
+		i++;
+		DrawTextEx(GetFontDefault(), FormatText("F: draw mode"), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
+		DrawTextEx(GetFontDefault(), FormatText("F: draw mode"), { 10, 10 + 50*i }, fontSize, spacing, mode==DRAW ? DARKGRAY : SKYBLUE);
+		i++;
+		DrawTextEx(GetFontDefault(), FormatText("G: game mode"), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
+		DrawTextEx(GetFontDefault(), FormatText("G: game mode"), { 10, 10 + 50*i }, fontSize, spacing, mode==GAME ? DARKGRAY : SKYBLUE);
+		i+=2;
+		
+		if (mode == GAME)
 		{
 			bool arrowsPressed = IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN);
 
-			static Vector2 prevMousePos = { 0, 0 };
-			Vector2 mousePos = GetMousePosition();
-			Vector2 mouseVect = Vector2Subtract(mousePos, prevMousePos);
-			bool mouseMoving = Vector2Length(mouseVect) != 0;
-			prevMousePos = GetMousePosition();
-			DrawTextEx(GetFontDefault(), FormatText("Arrows keys: move"), { 10 + shadowOffset, 10 + 250 + shadowOffset }, fontSize, spacing, shadowColor);
-			DrawTextEx(GetFontDefault(), FormatText("Arrows keys: move"), { 10, 10 + 250 }, fontSize, spacing, arrowsPressed ? DARKGRAY : SKYBLUE);
-
-			DrawTextEx(GetFontDefault(), FormatText("Mouse: rotate"), { 10 + shadowOffset, 10 + 300 + shadowOffset }, fontSize, spacing, shadowColor);
-			DrawTextEx(GetFontDefault(), FormatText("Mouse: rotate"), { 10, 10 + 300 }, fontSize, spacing, mouseMoving ? DARKGRAY : SKYBLUE);
-
+			DrawTextEx(GetFontDefault(), FormatText("Arrows keys: move"), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
+			DrawTextEx(GetFontDefault(), FormatText("Arrows keys: move"), { 10, 10 + 50*i }, fontSize, spacing, arrowsPressed ? DARKGRAY : SKYBLUE);
+			i++;
+			DrawTextEx(GetFontDefault(), FormatText("Mouse: rotate"), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
+			DrawTextEx(GetFontDefault(), FormatText("Mouse: rotate"), { 10, 10 + 50*i }, fontSize, spacing, SKYBLUE);
+			i++;
 			DrawTextEx(GetFontDefault(), FormatText("Score: %d", score), { 750 + shadowOffset, 50 + shadowOffset }, 40, spacing, shadowColor);
 			DrawTextEx(GetFontDefault(), FormatText("Score: %d", score), { 750, 50 }, 40, spacing, SKYBLUE);
 
 		}
-		else
+		else if (mode == PHYSICS)
 		{
-			DrawTextEx(GetFontDefault(), FormatText("Left click: shoot ray"), { 10 + shadowOffset, 10 + 250 + shadowOffset }, fontSize, spacing, shadowColor);
-			DrawTextEx(GetFontDefault(), FormatText("Left click: shoot ray"), { 10, 10 + 250 }, fontSize, spacing, IsMouseButtonDown(MOUSE_LEFT_BUTTON) ? DARKGRAY : SKYBLUE);
-
-			DrawTextEx(GetFontDefault(), FormatText("Right click: move camera"), { 10 + shadowOffset, 10 + 300 + shadowOffset }, fontSize, spacing, shadowColor);
-			DrawTextEx(GetFontDefault(), FormatText("Right click: move camera"), { 10, 10 + 300 }, fontSize, spacing, IsMouseButtonDown(MOUSE_RIGHT_BUTTON) ? DARKGRAY : SKYBLUE);
-
-			DrawTextEx(GetFontDefault(), FormatText("Space: reset ball"), { 10 + shadowOffset, 10 + 350 + shadowOffset }, fontSize, spacing, shadowColor);
-			DrawTextEx(GetFontDefault(), FormatText("Space: reset ball"), { 10, 10 + 350 }, fontSize, spacing, IsKeyDown(KEY_SPACE) ? DARKGRAY : SKYBLUE);
+			DrawTextEx(GetFontDefault(), FormatText("Left click: shoot ray"), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
+			DrawTextEx(GetFontDefault(), FormatText("Left click: shoot ray"), { 10, 10 + 50*i }, fontSize, spacing, IsMouseButtonDown(MOUSE_LEFT_BUTTON) ? DARKGRAY : SKYBLUE);
+			i++;
+			DrawTextEx(GetFontDefault(), FormatText("Right click: move camera"), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
+			DrawTextEx(GetFontDefault(), FormatText("Right click: move camera"), { 10, 10 + 50*i }, fontSize, spacing, IsMouseButtonDown(MOUSE_RIGHT_BUTTON) ? DARKGRAY : SKYBLUE);
+			i++;
+			DrawTextEx(GetFontDefault(), FormatText("Space: reset ball"), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
+			DrawTextEx(GetFontDefault(), FormatText("Space: reset ball"), { 10, 10 + 50*i }, fontSize, spacing, IsKeyDown(KEY_SPACE) ? DARKGRAY : SKYBLUE);
+			i++;
 		}
-
+		else if (mode == DRAW)
+		{
+			DrawTextEx(GetFontDefault(), FormatText("Right click: move camera"), { 10 + shadowOffset, 10 + 50 * i + shadowOffset }, fontSize, spacing, shadowColor);
+			DrawTextEx(GetFontDefault(), FormatText("Right click: move camera"), { 10, 10 + 50 * i }, fontSize, spacing, IsMouseButtonDown(MOUSE_RIGHT_BUTTON) ? DARKGRAY : SKYBLUE);
+		}
 		#pragma endregion
 
 		EndDrawing();

@@ -17,7 +17,7 @@ using namespace std;
 #endif
 
 #define EPSILON 1.e-6f
-#define GRAVITY {0, -9.81, 0}
+#define GRAVITY {0, -9.81f, 0}
 
 template <typename T> int sgn(T val) {
 	return (T(0) < val) - (val < T(0));
@@ -207,7 +207,7 @@ bool IsPointInsideBox(Box box, Vector3 globalPt)
 
 Polar CartesianToPolar(Vector2 cart, bool keepThetaPositive = true)
 {
-	Polar polar = { sqrt(cart.x * cart.x + cart.y * cart.y), atan2f(cart.y,cart.x) };
+	Polar polar = { sqrtf(cart.x * cart.x + cart.y * cart.y), atan2f(cart.y,cart.x) };
 	if (keepThetaPositive && polar.theta < 0)
 	{
 		polar.theta += 2 * PI;
@@ -222,7 +222,7 @@ Vector2 PolarToCartesian(Polar polar)
 
 Cylindrical CartesianToCylindrical(Vector3 cart, bool keepThetaPositive = true)
 {
-	Cylindrical cylindrical = { sqrt(pow(cart.x, 2) + pow(cart.z, 2)), atan2f(cart.x,cart.z), cart.y };
+	Cylindrical cylindrical = { sqrtf(powf(cart.x, 2) + powf(cart.z, 2)), atan2f(cart.x,cart.z), cart.y };
 	if (keepThetaPositive && cylindrical.theta < 0)
 	{
 		cylindrical.theta += 2 * PI;
@@ -238,7 +238,7 @@ Vector3 CylindricalToCartesian(Cylindrical cylindrical)
 
 Spherical CartesianToSpherical(Vector3 cart, bool keepThetaPositive = true)
 {
-	float rho = sqrt(pow(cart.x, 2) + pow(cart.y, 2) + pow(cart.z, 2));
+	float rho = sqrtf(powf(cart.x, 2) + powf(cart.y, 2) + powf(cart.z, 2));
 	float phi = acosf(cart.y / rho);
 
 	if (abs(rho) < EPSILON) phi = 0;
@@ -270,7 +270,6 @@ void MyUpdateOrbitalCamera(Camera* camera, float deltaTime)
 	float rhoMin = 4;
 	float rhoMax = 40;
 	Vector2 mousePos;
-	Spherical sphDelta;
 
 	// Calcul du vecteur de déplacement de la souris par différence entre la position courante de la souris et la position précédente
 	static Vector2 prevMousePos = { 0, 0 };
@@ -787,7 +786,7 @@ void MyDrawPolygonSphereCorner(SphereCorner sphereCorner, int nMeridians, int nP
 			point = SphericalToCartesian(sphPoint);
 			rlVertex3f(point.x, point.y, point.z);
 
-			//// Second triangle
+			// Second triangle
 			rlVertex3f(point.x, point.y, point.z);
 			sphPoint.phi += parallelAngle;
 			sphPoint.theta -= meridianAngle;
@@ -2042,10 +2041,10 @@ bool IntersectSegmentInfiniteCylinder(Segment segment, Cylinder cylinder, float&
 	float p2z = bLocal.z;
 
 	//Polynôme du second degré
-	float a = pow((p2x - p1x), 2) + pow((p2z - p1z), 2);
+	float a = powf((p2x - p1x), 2) + powf((p2z - p1z), 2);
 	float b = 2 * p1x * (p2x - p1x) + 2 * p1z * (p2z - p1z);
-	float c = pow(p1x, 2) + pow(p1z, 2) - pow(cylinder.radius, 2);
-	float delta = pow(b, 2) - 4 * a * c;
+	float c = powf(p1x, 2) + powf(p1z, 2) - powf(cylinder.radius, 2);
+	float delta = powf(b, 2) - 4 * a * c;
 
 	if (delta > 0)
 	{
@@ -2588,12 +2587,13 @@ bool GetSphereNewPositionAndVelocityIfCollidingWithRoundedBoxes(Sphere sphere, c
 	return collided;
 }
 
-bool GetSphereNewPositionAndVelocityIfMultiCollidingWithRoundedBoxes(Sphere sphere, const std::vector<RoundedBox>& rndBoxes, Vector3 velocity, float rotInertia, Vector3 angularMomentum, float deltaTime, int nMaxSuccessiveCollisions, Vector3& newPosition, Vector3& newVelocity, Vector3 newAngularMomentum, Vector3& colNormal, Vector3& colSpherePos, Color& newColor)
+bool GetSphereNewPositionAndVelocityIfMultiCollidingWithRoundedBoxes(Sphere sphere, const std::vector<RoundedBox>& rndBoxes, Vector3 velocity, float rotInertia, float deltaTime, int nMaxSuccessiveCollisions, Vector3& newPosition, Vector3& newVelocity, Vector3& colNormal, Vector3& colSpherePos, Color& newColor)
 {
 	float colT;
 	bool collide = GetSphereNewPositionAndVelocityIfCollidingWithRoundedBoxes(sphere, rndBoxes, velocity, deltaTime, colT, colSpherePos, colNormal, newPosition, newVelocity, newColor);
 	int collideCount = 0;
 	Sphere tempSphere = sphere;
+
 	// Appel successif de la fonction avec la nouvelle position / velocité tant qu'il y a des intersections à gérer
 	while (collideCount < nMaxSuccessiveCollisions&& collide)
 	{
@@ -2601,7 +2601,9 @@ bool GetSphereNewPositionAndVelocityIfMultiCollidingWithRoundedBoxes(Sphere sphe
 		tempSphere.ref.origin = newPosition;
 		collide = GetSphereNewPositionAndVelocityIfCollidingWithRoundedBoxes(tempSphere, rndBoxes, newVelocity, deltaTime, colT, colSpherePos, colNormal, newPosition, newVelocity, newColor);
 	}
-	return collideCount > 0;
+
+	if (collideCount == 0) return false;
+	return true;
 }
 
 #pragma endregion
@@ -2620,13 +2622,13 @@ std::vector<RoundedBox> GenerateRandomObstacleGrid(float width, float depth, int
 	// Ajout des murs de base
 	std::vector<RoundedBox> obstacles =
 	{
-		{ { { 0,-1,0 }, QuaternionIdentity()}, { 20, 0.2, 20 }, 0, GRAY },
-		{ { { 0,20,0 }, QuaternionIdentity()}, { 20, 0.2, 20 }, 0, BLANK},
+		{ { { 0,-1,0 }, QuaternionIdentity()}, { 20, 0.2f, 20 }, 0, GRAY },
+		{ { { 0,20,0 }, QuaternionIdentity()}, { 20, 0.2f, 20 }, 0, BLANK},
 
-		{ { { -20,8,0 }, QuaternionFromAxisAngle({0,1,0}, PI / 2)}, {20, 10, 0.2}, 0, LIGHTGRAY},
-		{ { { 20,8,0 }, QuaternionFromAxisAngle({0,1,0}, -PI / 2)}, {20, 10, 0.2}, 0, LIGHTGRAY},
-		{ { { 0,8,20 }, QuaternionFromAxisAngle({0,0,0}, 0)}, {20, 10, 0.2}, 0, LIGHTGRAY},
-		{ { { 0,8,-20 }, QuaternionFromAxisAngle({0,0,0}, 0)}, {20, 10, 0.2}, 0, LIGHTGRAY},
+		{ { { -20,8,0 }, QuaternionFromAxisAngle({0,1,0}, PI / 2)}, {20, 10, 0.2f}, 0, LIGHTGRAY},
+		{ { { 20,8,0 }, QuaternionFromAxisAngle({0,1,0}, -PI / 2)}, {20, 10, 0.2f}, 0, LIGHTGRAY},
+		{ { { 0,8,20 }, QuaternionFromAxisAngle({0,0,0}, 0)}, {20, 10, 0.2f}, 0, LIGHTGRAY},
+		{ { { 0,8,-20 }, QuaternionFromAxisAngle({0,0,0}, 0)}, {20, 10, 0.2f}, 0, LIGHTGRAY},
 	};
 
 	std::vector<Vector3> coords = {};
@@ -2635,7 +2637,7 @@ std::vector<RoundedBox> GenerateRandomObstacleGrid(float width, float depth, int
 	Color color;
 
 
-	float val, rot, radius, x, z;
+	float rot, radius, x, z;
 	int index;
 	float boxSize = (min(width, depth) / d - 2) / 2;
 	if (boxSize <= 0) return obstacles;
@@ -2662,7 +2664,7 @@ std::vector<RoundedBox> GenerateRandomObstacleGrid(float width, float depth, int
 			coord = coords[index];
 			coords.erase(coords.begin() + index);
 
-			rot = rand();
+			rot = (float) rand();
 			rotAxis = { (float)(rand() % 2), (float)(rand() % 2), (float)(rand() % 2) };
 			ref = { coord, QuaternionFromAxisAngle(rotAxis, rot) };
 
@@ -2693,7 +2695,7 @@ void DisplayTests(float time, float deltaTime)
 	ReferenceFrame ref;
 	static float angle = 0;
 	Vector3 axes = { 1, 1, 1 };
-	angle += (2*PI) * 0.25 * deltaTime;
+	angle += (2*PI) * 0.25f * deltaTime;
 
 	Color polygonColor = SKYBLUE;
 	Color wireframeColor = BLACK;
@@ -2801,10 +2803,10 @@ void Game(RoundedBox& player, Sphere ball, float deltaTime)
 Color GetSinusoidalColor(Color color, float time)
 {
 	static int colorSpeed = 5;
-	float colorPercentage = 0.5 + (sin(time * colorSpeed) + 1) / 4;
-	unsigned char r = colorPercentage * color.r;
-	unsigned char g = colorPercentage * color.g;
-	unsigned char b = colorPercentage * color.b;
+	float colorPercentage = 0.5f + (sin(time * colorSpeed) + 1) / 4;
+	unsigned char r = (unsigned char) (colorPercentage * color.r);
+	unsigned char g = (unsigned char) (colorPercentage * color.g);
+	unsigned char b = (unsigned char) (colorPercentage * color.b);
 	return { r, g, b, 255 };
 }
 
@@ -2817,8 +2819,8 @@ int main(int argc, char* argv[])
 	// Initialization
 	//--------------------------------------------------------------------------------------
 	float screenSizeCoef = .9f;
-	const int screenWidth = 1920 * screenSizeCoef;
-	const int screenHeight = 1080 * screenSizeCoef;
+	const int screenWidth = (int) (1920 * screenSizeCoef);
+	const int screenHeight = (int) (1080 * screenSizeCoef);
 
 	InitWindow(screenWidth, screenHeight, "ESIEE - E3FI - 2022 - 2023 - Maths 3D");
 
@@ -2844,13 +2846,12 @@ int main(int argc, char* argv[])
 	Vector3 initialVel;
 	Vector3 pos;
 	Vector3 vel;
-	Vector3 rot = { 0, 0, 0 };
 	Color sphereColor = SKYBLUE;
 	Color highlightColor = BLACK;
 
 	std::vector<RoundedBox> objects;
 	std::vector<RoundedBox> debugObjects;
-	RoundedBox basePlayer = { { { 0,0,0 }, QuaternionIdentity() }, {3.5, 0.2, 3.5}, 1, SKYBLUE };
+	RoundedBox basePlayer = { { { 0,0,0 }, QuaternionIdentity() }, {3.5f, 0.2f, 3.5f}, 1, SKYBLUE };
 	RoundedBox player = basePlayer;
 
 	int score = 0;
@@ -2882,11 +2883,16 @@ int main(int argc, char* argv[])
 	float E = 0.5f * (mass * Vector3Length(initialVel) + mass * Vector3Length(GRAVITY) * initialPos.y);
 	float initialE = E;
 	float rotInertia = (2.f / 5.f) * (mass * powf(2, radius));
-	float rotSpeed = 0.25;
-	float friction = 0.95;
+	float rotSpeed = 2.f;
+	float friction = 0.95f;
+	float dTheta = 0;
 	Vector3 omegaC = { 0,0,0 };
 	Vector3 angularMomentum = { 0,0,0 };
+	Vector3 rot = { 0, 0, 0 };
 	int nMaxSuccessiveCollisions = 5;
+
+	Sphere sphere = { {pos, QuaternionIdentity()}, radius, sphereColor};
+
 
 	float averageFPS = 0;
 
@@ -2913,9 +2919,9 @@ int main(int argc, char* argv[])
 		BeginMode3D(camera);
 		{
 			#pragma region game management
-
-			Sphere sphere = { {pos, QuaternionFromAxisAngle(Vector3Normalize(angularMomentum), rotInertia * time * rotSpeed)}, radius, sphereColor };
-
+			sphere.ref.origin = pos;
+			sphere.color = sphereColor;
+			sphere.ref.q = QuaternionMultiply(sphere.ref.q, QuaternionFromAxisAngle(angularMomentum, deltaTime * 5));
 			#pragma region change mode
 			
 			if (IsKeyPressed(KEY_G))
@@ -2925,6 +2931,8 @@ int main(int argc, char* argv[])
 				initialVel = { 0, 10, 0 };
 				pos = initialPos;
 				vel = initialVel;
+				rot = { 0,0,0 };
+				angularMomentum = { 0,0,0 };
 				score = 0;
 				if (mode != GAME) camera.position = SphericalToCartesian({ 15, 0, PI / 4.f });
 				mode = GAME;
@@ -2935,6 +2943,8 @@ int main(int argc, char* argv[])
 				objects = debugObjects;				
 				initialPos = { 0, 15, 0 };
 				initialVel = { 15, 4, 10 };
+				rot = { 0,0,0 };
+				angularMomentum = { 0,0,0 };
 				pos = initialPos;
 				vel = { (float)(rand() % 40 - 20), (float)(rand() % 20), (float)(rand() % 40 - 20) };
 				if (mode != PHYSICS) camera.position = SphericalToCartesian({ 30,  PI / 4.f, PI / 4.f });
@@ -2958,6 +2968,8 @@ int main(int argc, char* argv[])
 					vel = { 0,10,0 };
 					score = 0;
 					player = basePlayer;
+					rot = { 0,0,0 };
+					angularMomentum = { 0,0,0 };
 				}
 			}
 			else if (mode == PHYSICS)
@@ -2978,9 +2990,10 @@ int main(int argc, char* argv[])
 			Vector3 colNormal;
 			Vector3 newPos;
 			Vector3 newVel;
+			Vector3 newRot;
+			Vector3 newAngularMomentum;
 			Vector3 colPt;
 			Color newColor;
-
 			if (mode != DRAW)
 			{
 				vel = Vector3Add(vel, Vector3Scale(GRAVITY, deltaTime));
@@ -2988,14 +3001,18 @@ int main(int argc, char* argv[])
 				float vitesse = sqrtf(2 * (E - k) / mass);
 				if (E > k) vel = Vector3Scale(Vector3Normalize(vel), vitesse);
 
-				bool collide = GetSphereNewPositionAndVelocityIfMultiCollidingWithRoundedBoxes(sphere, objects, vel, rotInertia, angularMomentum, deltaTime, 100, newPos, newVel, angularMomentum, colNormal, colSpherePos, newColor);
+				bool collide = GetSphereNewPositionAndVelocityIfMultiCollidingWithRoundedBoxes(sphere, objects, vel, rotInertia, deltaTime, 100, newPos, newVel, colNormal, colSpherePos, newColor);
 				if (collide)
 				{
-					//E *= 0.8;
-					omegaC = GlobalToLocalVect(colSpherePos, sphere.ref);
-					angularMomentum = Vector3Subtract(angularMomentum, Vector3Scale(Vector3CrossProduct(omegaC, Vector3Subtract(vel, Vector3Add(Vector3Scale(colNormal, Vector3DotProduct(vel, colNormal)), Vector3CrossProduct(rot, omegaC)))), 1 * deltaTime));
+					//E = 0.8;
+					Vector3 omegaC = GlobalToLocalVect(colSpherePos, sphere.ref);
+					dTheta = sqrtf(Vector3Length(angularMomentum) / rotInertia);
+					rot = Vector3Scale(Vector3Normalize(angularMomentum), dTheta);
+					newAngularMomentum = Vector3Subtract(angularMomentum, Vector3Scale(Vector3CrossProduct(omegaC, Vector3Subtract(vel, Vector3Add(Vector3Scale(colNormal, Vector3DotProduct(vel, colNormal)), Vector3CrossProduct(rot, omegaC)))), 1 * deltaTime));
+
 					vel = newVel;
 					pos = newPos;
+					angularMomentum = newAngularMomentum;
 					sphereColor = newColor;
 					score += 1;
 				}
@@ -3019,6 +3036,8 @@ int main(int argc, char* argv[])
 			{
 				pos = initialPos;
 				vel = { (float)(rand() % 40 - 20), (float)(rand() % 20), (float)(rand() % 40 - 20) };
+				rot = { 0,0,0 };
+				angularMomentum = { 0,0,0 };
 			}
 
 			if (mode == PHYSICS && IsMouseButtonDown(MOUSE_LEFT_BUTTON))
@@ -3059,7 +3078,7 @@ int main(int argc, char* argv[])
 		#pragma region Text
 
 		static float shadowOffset = 1;
-		static int fontSize = 30;
+		static float fontSize = 30;
 		static float spacing = 3;
 		static Color fontColor = GREEN;
 		static Color shadowColor = BLACK;
@@ -3070,7 +3089,7 @@ int main(int argc, char* argv[])
 		DrawTextEx(GetFontDefault(), FormatText("Velocity: {%0.2f, %0.2f, %0.2f}", vel.x, vel.y, vel.z), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
 		DrawTextEx(GetFontDefault(), FormatText("Velocity: {%0.2f, %0.2f, %0.2f}", vel.x, vel.y, vel.z), { 10, 10 + 50*i }, fontSize, spacing, fontColor);
 		i++;
-		DrawTextEx(GetFontDefault(), FormatText("Angular momentum: {%0.2f, %0.2f, %0.2f}", angularMomentum.x, angularMomentum.y, angularMomentum.z), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
+		DrawTextEx(GetFontDefault(), FormatText("Angular momentum: {%0.2f, %0.2f, %0.2f}", angularMomentum.x, angularMomentum.y, angularMomentum.z), { 10 + shadowOffset, 10 + 50 * i + shadowOffset }, fontSize, spacing, shadowColor);
 		DrawTextEx(GetFontDefault(), FormatText("Angular momentum: {%0.2f, %0.2f, %0.2f}", angularMomentum.x, angularMomentum.y, angularMomentum.z), { 10, 10 + 50*i }, fontSize, spacing, fontColor);
 		i+=2;
 		DrawTextEx(GetFontDefault(), FormatText("D: physics mode | regenerate grid"), { 10 + shadowOffset, 10 + 50*i + shadowOffset }, fontSize, spacing, shadowColor);
